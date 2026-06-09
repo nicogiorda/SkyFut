@@ -11,8 +11,8 @@ public class CansancioDecorator extends JugadorDecorator {
     }
 
     @Override
-    public int getRendimiento() {
-        // TODO: reducir rendimiento según minutos
-        return jugador.getRendimiento();
+    public double getRendimiento() {
+        double modificador = Math.max(0.5, 1.0 - (minutoJugado / 300.0));
+        return jugador.getRendimiento() * modificador;
     }
 }

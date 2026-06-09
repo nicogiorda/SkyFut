@@ -95,15 +95,14 @@ TacticaStrategy (interfaz)
 ├── getModificadorDefensa() : double
 └── getFormacion() : String
 
-Concretas: Tactica442, Tactica433, Tactica352, Tactica4231
+Concretas: TacticaDefensiva, TacticaEquilibrada, TacticaOfensiva
 ```
 
 | Táctica | Ataque | Defensa |
 |---------|--------|---------|
-| 4-4-2   | 1.0    | 1.0     |
-| 4-3-3   | 1.2    | 0.85    |
-| 3-5-2   | 1.1    | 0.9     |
-| 4-2-3-1 | 1.05   | 1.05    |
+| Defensiva   | 0.85   | 1.2     |
+| Equilibrada | 1.0    | 1.0     |
+| Ofensiva    | 1.2    | 0.85    |
 
 `Equipo` tiene `private TacticaStrategy tactica`. Cambio solo durante `Entretiempo`.
 
@@ -344,7 +343,7 @@ simulador/
 │   ├── factory/  → GolFactory, TarjetaFactory, CambioFactory, LesionFactory
 │   └── modelo/   → Gol, Tarjeta, Cambio, Lesion
 ├── composite/    → ComponenteTorneo, Torneo, Fase, Partido
-├── strategy/     → TacticaStrategy, Tactica442, Tactica433, Tactica352, Tactica4231
+├── strategy/     → TacticaStrategy, TacticaDefensiva, TacticaEquilibrada, TacticaOfensiva
 ├── facade/       → TorneoFacade
 ├── motor/        → MotorSimulacion
 ├── repositorio/  → RepositorioEquipo, RepositorioJugador, RepositorioPartido

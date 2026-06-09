@@ -3,17 +3,26 @@ package simulador.torneo.domain;
 public class Jugador implements IJugador {
     private String nombre;
     private String posicion;
-    private int rendimientoBase;
+    private double rendimientoBase;
 
-    public Jugador(String nombre, String posicion, int rendimientoBase) {
+    public Jugador(String nombre, String posicion, double rendimientoBase) {
         this.nombre = nombre;
         this.posicion = posicion;
         this.rendimientoBase = rendimientoBase;
     }
 
     @Override
-    public String getNombre() { return nombre; }
+    public String getNombre() {
+        return nombre;
+    }
 
     @Override
-    public int getRendimiento() { return rendimientoBase; }
+    public String getPosicion() {
+        return posicion;
+    }
+
+    @Override
+    public double getRendimiento() {
+        return rendimientoBase;
+    }
 }

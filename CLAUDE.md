@@ -62,7 +62,8 @@ Cuando te pida código, seguí estrictamente la arquitectura definida aquí. Si 
 
 ### 6. STRATEGY — Tácticas de juego
 - **`TacticaStrategy` (interfaz):** `getModificadorAtaque() : double`, `getModificadorDefensa() : double`, `getFormacion() : String`
-- **Concretas:** `Tactica442`, `Tactica433`, `Tactica352`, `Tactica4231`
+- **Concretas:** `TacticaDefensiva`, `TacticaEquilibrada`, `TacticaOfensiva`
+- **Modificadores:** Defensiva `ataque 0.85 / defensa 1.2`; Equilibrada `ataque 1.0 / defensa 1.0`; Ofensiva `ataque 1.2 / defensa 0.85`
 - `Equipo` tiene `private TacticaStrategy tactica`
 - El DT puede cambiar la táctica **solo durante `Entretiempo`** (lo valida State)
 
@@ -339,7 +340,7 @@ simulador/
 │   ├── factory/  → GolFactory, TarjetaFactory, CambioFactory, LesionFactory
 │   └── modelo/   → Gol, Tarjeta, Cambio, Lesion
 ├── composite/    → ComponenteTorneo, Torneo, Fase, Partido
-├── strategy/     → TacticaStrategy, Tactica442, Tactica433, Tactica352, Tactica4231
+├── strategy/     → TacticaStrategy, TacticaDefensiva, TacticaEquilibrada, TacticaOfensiva
 ├── facade/       → TorneoFacade
 ├── motor/        → MotorSimulacion
 ├── repositorio/  → RepositorioEquipo, RepositorioJugador, RepositorioPartido
