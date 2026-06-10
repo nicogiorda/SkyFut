@@ -1,4 +1,4 @@
-repackage simulador.decorator;
+package simulador.decorator;
 
 import simulador.domain.IJugador;
 
