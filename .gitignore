@@ -8,3 +8,6 @@ target/
 
 # macOS
 .DS_Store
+
+# SQLite backups
+*.db.bak-*
