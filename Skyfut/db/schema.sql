@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS jugador (
                          posicion TEXT NOT NULL CHECK(posicion IN ('POR','DEF','MED','DEL')),
                          rendimiento_base REAL NOT NULL DEFAULT 1.0,
                          id_equipo INTEGER NOT NULL,
+                         UNIQUE (id_equipo, nombre),
                          FOREIGN KEY (id_equipo) REFERENCES equipo(id)
 );
 
@@ -37,7 +38,7 @@ CREATE TABLE IF NOT EXISTS plantel (
 
 CREATE TABLE IF NOT EXISTS torneo (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        nombre TEXT NOT NULL,
+                        nombre TEXT NOT NULL UNIQUE,
                         fecha_inicio TEXT,
                         estado TEXT NOT NULL DEFAULT 'EN_CURSO'
                             CHECK(estado IN ('EN_CURSO','FINALIZADO')),
@@ -53,6 +54,7 @@ CREATE TABLE IF NOT EXISTS fase (
                       nombre TEXT NOT NULL,
                       orden INTEGER NOT NULL,
                       completada INTEGER NOT NULL DEFAULT 0,
+                      UNIQUE (id_torneo, nombre),
                       FOREIGN KEY (id_torneo) REFERENCES torneo(id)
 );
 
@@ -69,6 +71,7 @@ CREATE TABLE IF NOT EXISTS partido (
                                               'ENTRETIEMPO','SEGUNDO_TIEMPO','FINALIZADO')),
                          id_tactica_local INTEGER,
                          id_tactica_visit INTEGER,
+                         UNIQUE (id_fase, id_equipo_local, id_equipo_visit),
                          FOREIGN KEY (id_fase) REFERENCES fase(id),
                          FOREIGN KEY (id_equipo_local) REFERENCES equipo(id),
                          FOREIGN KEY (id_equipo_visit) REFERENCES equipo(id),

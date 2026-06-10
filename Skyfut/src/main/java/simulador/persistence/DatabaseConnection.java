@@ -15,6 +15,7 @@ public class DatabaseConnection {
     private static DatabaseConnection instancia;
     private static final String URL = "jdbc:sqlite:db/torneo.db";
     private static final String SCHEMA_PATH = "db/schema.sql";
+    private static final String SEED_PATH = "db/seed.sql";
 
     private final Connection connection;
 
@@ -53,27 +54,28 @@ public class DatabaseConnection {
 
     private void inicializarBaseDatos() throws SQLException {
         try {
-            cargarSchema();
+            cargarScript(SCHEMA_PATH);
+            cargarScript(SEED_PATH);
             System.out.println("Base de datos verificada correctamente.");
         } catch (IOException e) {
             throw new SQLException("Error al inicializar la base de datos: " + e.getMessage(), e);
         }
     }
 
-    private void cargarSchema() throws SQLException, IOException {
-        Path schemaPath = Paths.get(SCHEMA_PATH);
+    private void cargarScript(String scriptPath) throws SQLException, IOException {
+        Path path = Paths.get(scriptPath);
 
-        if (Files.exists(schemaPath)) {
-            ejecutarScriptSQL(Files.readString(schemaPath));
+        if (Files.exists(path)) {
+            ejecutarScriptSQL(Files.readString(path));
             return;
         }
 
-        try (InputStream resourceStream = getClass().getClassLoader().getResourceAsStream("db/schema.sql")) {
+        try (InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(scriptPath)) {
             if (resourceStream == null) {
-                throw new IOException("No se encontro schema.sql en " + SCHEMA_PATH + " ni en classpath");
+                throw new IOException("No se encontro " + scriptPath + " ni en classpath");
             }
-            String schema = new String(resourceStream.readAllBytes(), StandardCharsets.UTF_8);
-            ejecutarScriptSQL(schema);
+            String script = new String(resourceStream.readAllBytes(), StandardCharsets.UTF_8);
+            ejecutarScriptSQL(script);
         }
     }
 
