@@ -29,6 +29,6 @@ public class GolFactory implements EventoFactory {
         }
 
         IJugador autor = titulares.get(random.nextInt(titulares.size()));
-        return Optional.of(new Gol(ctx.getMinuto(), autor));
+        return Optional.of(new Gol(ctx.getMinuto(), autor, equipoAtacante));
     }
 }
