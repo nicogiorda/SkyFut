@@ -1,22 +1,22 @@
 -- ESQUEMA COMPLETO PARA SKYFUT
 -- Base de Datos SQLite para Simulador de Torneo de Fútbol
 
-CREATE TABLE tactica (
+CREATE TABLE IF NOT EXISTS tactica (
                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                         nombre TEXT NOT NULL,
+                         nombre TEXT NOT NULL UNIQUE,
                          formacion TEXT NOT NULL,
                          mod_ataque REAL NOT NULL DEFAULT 1.0,
                          mod_defensa REAL NOT NULL DEFAULT 1.0
 );
 
-CREATE TABLE equipo (
+CREATE TABLE IF NOT EXISTS equipo (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         nombre TEXT NOT NULL UNIQUE,
                         id_tactica INTEGER NOT NULL,
                         FOREIGN KEY (id_tactica) REFERENCES tactica(id)
 );
 
-CREATE TABLE jugador (
+CREATE TABLE IF NOT EXISTS jugador (
                          id INTEGER PRIMARY KEY AUTOINCREMENT,
                          nombre TEXT NOT NULL,
                          posicion TEXT NOT NULL CHECK(posicion IN ('POR','DEF','MED','DEL')),
@@ -25,7 +25,7 @@ CREATE TABLE jugador (
                          FOREIGN KEY (id_equipo) REFERENCES equipo(id)
 );
 
-CREATE TABLE plantel (
+CREATE TABLE IF NOT EXISTS plantel (
                          id_equipo INTEGER NOT NULL,
                          id_jugador INTEGER NOT NULL,
                          rol_inicial TEXT NOT NULL CHECK(rol_inicial IN ('TITULAR','SUPLENTE')),
@@ -35,7 +35,7 @@ CREATE TABLE plantel (
                          FOREIGN KEY (id_jugador) REFERENCES jugador(id)
 );
 
-CREATE TABLE torneo (
+CREATE TABLE IF NOT EXISTS torneo (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         nombre TEXT NOT NULL,
                         fecha_inicio TEXT,
@@ -47,7 +47,7 @@ CREATE TABLE torneo (
                         FOREIGN KEY (id_campeon) REFERENCES equipo(id)
 );
 
-CREATE TABLE fase (
+CREATE TABLE IF NOT EXISTS fase (
                       id INTEGER PRIMARY KEY AUTOINCREMENT,
                       id_torneo INTEGER NOT NULL,
                       nombre TEXT NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE fase (
                       FOREIGN KEY (id_torneo) REFERENCES torneo(id)
 );
 
-CREATE TABLE partido (
+CREATE TABLE IF NOT EXISTS partido (
                          id INTEGER PRIMARY KEY AUTOINCREMENT,
                          id_fase INTEGER NOT NULL,
                          id_equipo_local INTEGER NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE partido (
                          FOREIGN KEY (id_tactica_visit) REFERENCES tactica(id)
 );
 
-CREATE TABLE evento_partido (
+CREATE TABLE IF NOT EXISTS evento_partido (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 id_partido INTEGER NOT NULL,
                                 tipo TEXT NOT NULL CHECK(tipo IN ('GOL','TARJETA','CAMBIO','LESION')),
@@ -92,7 +92,7 @@ CREATE TABLE evento_partido (
                                 FOREIGN KEY (id_equipo) REFERENCES equipo(id)
 );
 
-CREATE TABLE estadistica_jugador (
+CREATE TABLE IF NOT EXISTS estadistica_jugador (
                                      id INTEGER PRIMARY KEY AUTOINCREMENT,
                                      id_partido INTEGER NOT NULL,
                                      id_jugador INTEGER NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE estadistica_jugador (
                                      FOREIGN KEY (id_equipo) REFERENCES equipo(id)
 );
 
-CREATE TABLE estado_jugador_torneo (
+CREATE TABLE IF NOT EXISTS estado_jugador_torneo (
                                        id INTEGER PRIMARY KEY AUTOINCREMENT,
                                        id_torneo INTEGER NOT NULL,
                                        id_jugador INTEGER NOT NULL,
@@ -122,3 +122,17 @@ CREATE TABLE estado_jugador_torneo (
                                        FOREIGN KEY (id_torneo) REFERENCES torneo(id),
                                        FOREIGN KEY (id_jugador) REFERENCES jugador(id)
 );
+
+INSERT OR IGNORE INTO tactica (nombre, formacion, mod_ataque, mod_defensa)
+VALUES
+    ('Defensiva', '5-4-1', 0.85, 1.2),
+    ('Equilibrada', '4-4-2', 1.0, 1.0),
+    ('Ofensiva', '4-3-3', 1.2, 0.85);
+
+CREATE INDEX IF NOT EXISTS idx_equipo_id_tactica ON equipo(id_tactica);
+CREATE INDEX IF NOT EXISTS idx_jugador_id_equipo ON jugador(id_equipo);
+CREATE INDEX IF NOT EXISTS idx_fase_id_torneo ON fase(id_torneo);
+CREATE INDEX IF NOT EXISTS idx_partido_id_fase ON partido(id_fase);
+CREATE INDEX IF NOT EXISTS idx_evento_partido_id_partido ON evento_partido(id_partido);
+CREATE INDEX IF NOT EXISTS idx_estadistica_jugador_id_partido ON estadistica_jugador(id_partido);
+CREATE INDEX IF NOT EXISTS idx_estado_jugador_torneo_id_torneo ON estado_jugador_torneo(id_torneo);
