@@ -1,4 +1,4 @@
-package simulador.dto;
+package main.java.simulador.dto;
 
 import simulador.domain.Equipo;
 

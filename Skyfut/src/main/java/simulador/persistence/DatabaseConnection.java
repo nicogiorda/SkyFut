@@ -1,4 +1,4 @@
-package simulador.torneo.persistence;
+package simulador.persistence;
 
 import java.io.BufferedReader;
 import java.io.IOException;

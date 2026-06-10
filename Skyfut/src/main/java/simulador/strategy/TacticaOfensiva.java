@@ -1,4 +1,4 @@
-package main.java.simulador.strategy;
+package simulador.strategy;
 
 public class TacticaOfensiva implements TacticaStrategy {
     @Override

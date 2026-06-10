@@ -1,6 +1,6 @@
-package simulador.torneo.main;
+package simulador.main;
 
-import simulador.torneo.persistence.DatabaseConnection;
+import simulador.persistence.DatabaseConnection;
 
 public class Main {
     public static void main(String[] args) {

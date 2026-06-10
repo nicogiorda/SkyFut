@@ -51,7 +51,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>simulador.torneo.main.Main</mainClass>
+                            <mainClass>simulador.main.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
