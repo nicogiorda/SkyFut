@@ -2,6 +2,7 @@ package simulador.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import simulador.strategy.TacticaStrategy;
 
@@ -46,6 +47,13 @@ public class Equipo {
         return titulares.stream()
                 .mapToDouble(IJugador::getRendimiento)
                 .sum();
+    }
+
+    public void decorarTitular(IJugador jugador, Function<IJugador, IJugador> decorador) {
+        int indice = titulares.indexOf(jugador);
+        if (indice >= 0) {
+            titulares.set(indice, decorador.apply(jugador));
+        }
     }
 
     public void sustituir(IJugador sale, IJugador entra) {
