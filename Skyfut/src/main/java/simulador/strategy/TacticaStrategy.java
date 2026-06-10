@@ -1,4 +1,4 @@
-package simulador.torneo.strategy;
+package main.java.simulador.strategy;
 
 public interface TacticaStrategy {
     double getModificadorAtaque();

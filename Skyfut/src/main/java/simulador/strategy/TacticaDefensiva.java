@@ -1,18 +1,18 @@
-package simulador.torneo.strategy;
+package main.java.simulador.strategy;
 
-public class TacticaOfensiva implements TacticaStrategy {
+public class TacticaDefensiva implements TacticaStrategy {
     @Override
     public double getModificadorAtaque() {
-        return 1.2;
-    }
-
-    @Override
-    public double getModificadorDefensa() {
         return 0.85;
     }
 
     @Override
+    public double getModificadorDefensa() {
+        return 1.2;
+    }
+
+    @Override
     public String getFormacion() {
-        return "Ofensiva";
+        return "Defensiva";
     }
 }
