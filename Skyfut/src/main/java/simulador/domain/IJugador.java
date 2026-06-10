@@ -1,4 +1,4 @@
-package simulador.torneo.domain;
+package simulador.domain;
 
 public interface IJugador {
     String getNombre();

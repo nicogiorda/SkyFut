@@ -1,4 +1,4 @@
-package simulador.torneo.state;
+package simulador.state;
 
 import simulador.composite.Partido;
 

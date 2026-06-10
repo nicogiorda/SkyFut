@@ -1,6 +1,6 @@
-package simulador.torneo.decorator;
+package simulador.decorator;
 
-import simulador.torneo.domain.IJugador;
+import simulador.domain.IJugador;
 
 public abstract class JugadorDecorator implements IJugador {
     protected IJugador jugador;

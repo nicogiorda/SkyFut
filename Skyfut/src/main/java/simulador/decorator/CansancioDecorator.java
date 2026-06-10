@@ -1,6 +1,6 @@
-package simulador.torneo.decorator;
+package simulador.decorator;
 
-import simulador.torneo.domain.IJugador;
+import simulador.domain.IJugador;
 
 public class CansancioDecorator extends JugadorDecorator {
     private int minutoJugado;

@@ -1,6 +1,6 @@
-package simulador.torneo.decorator;
+package simulador.decorator;
 
-import simulador.torneo.domain.IJugador;
+import simulador.domain.IJugador;
 
 public class TarjetaAmarillaDecorator extends JugadorDecorator {
     public TarjetaAmarillaDecorator(IJugador jugador) {

@@ -1,9 +1,9 @@
-package simulador.torneo.domain;
+package simulador.domain;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import simulador.torneo.strategy.TacticaStrategy;
+import simulador.strategy.TacticaStrategy;
 
 public class Equipo {
     private String nombre;

@@ -1,4 +1,4 @@
-package simulador.torneo.dto;
+package simulador.dto;
 
 import java.util.List;
 

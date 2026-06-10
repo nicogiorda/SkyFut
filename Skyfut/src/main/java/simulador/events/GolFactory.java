@@ -1,12 +1,14 @@
-package simulador.torneo.events;
+package simulador.events;
 
-import simulador.torneo.domain.IJugador;
+import simulador.domain.IJugador;
+import simulador.dto.ContextoEvento;
 
 public class GolFactory implements EventoFactory {
     @Override
-    public EventoPartido crear(Object... params) {
-        int minuto = (int) params[0];
-        IJugador autor = (IJugador) params[1];
-        return new Gol(minuto, autor);
+    public EventoPartido crearEvento(ContextoEvento ctx) {
+        double ataque = ctx.getRendimientoAtaque(ctx.local);
+        double defensa = ctx.getRendimientoDefensa(ctx.visitante);
+
+        
     }
 }

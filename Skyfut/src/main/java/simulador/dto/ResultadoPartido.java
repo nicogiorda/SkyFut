@@ -1,4 +1,4 @@
-package simulador.torneo.dto;
+package simulador.dto;
 
 public class ResultadoPartido {
     private final String equipoLocal;

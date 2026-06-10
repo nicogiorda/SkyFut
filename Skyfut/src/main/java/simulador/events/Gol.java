@@ -1,6 +1,6 @@
-package simulador.torneo.events;
+package simulador.events;
 
-import simulador.torneo.domain.IJugador;
+import simulador.domain.IJugador;
 
 public class Gol implements EventoPartido {
     private final int minuto;

@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import simulador.torneo.domain.Equipo;
-import simulador.torneo.dto.Goleador;
-import simulador.torneo.dto.ResultadoPartido;
-import simulador.torneo.events.EventoPartido;
-import simulador.torneo.state.EstadoPartido;
-import simulador.torneo.state.Finalizado;
-import simulador.torneo.state.NoIniciado;
+import simulador.domain.Equipo;
+import simulador.dto.Goleador;
+import simulador.dto.ResultadoPartido;
+import simulador.events.EventoPartido;
+import simulador.state.EstadoPartido;
+import simulador.state.Finalizado;
+import simulador.state.NoIniciado;
 
 public class Partido implements ComponenteTorneo {
     private Equipo local;

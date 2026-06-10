@@ -1,4 +1,4 @@
-package simulador.torneo.domain;
+package simulador.domain;
 
 public class Jugador implements IJugador {
     private String nombre;

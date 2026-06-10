@@ -1,5 +1,10 @@
-package simulador.torneo.events;
+package simulador.events;
+
+import java.util.Optional;
+
+import simulador.dto.ContextoEvento;
 
 public interface EventoFactory {
-    EventoPartido crear(Object... params);
+    public Optional<EventoPartido> crearEvento(ContextoEvento ctx);
+
 }

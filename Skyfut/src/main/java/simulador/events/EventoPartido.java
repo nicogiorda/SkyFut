@@ -1,4 +1,4 @@
-package simulador.torneo.events;
+package simulador.events;
 
 import simulador.composite.Partido;
 
