@@ -103,4 +103,13 @@ public class Partido implements ComponenteTorneo {
     public List<Goleador> getGoleadores() {
         return List.of();
     }
+
+    public void incrementarGolesLocal() {
+            golesLocal++;
+    }
+
+    public void incrementarGolesVisitante() {
+            golesVisitante++;
+    }
+        
 }

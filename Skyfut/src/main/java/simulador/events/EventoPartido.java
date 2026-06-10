@@ -7,7 +7,5 @@ public interface EventoPartido {
     String getTipo();
     String getDescripcion();
 
-    default void aplicar(Partido partido) {
-        // Intencionalmente vacío: los eventos pueden ser descriptivos o aplicar efectos más adelante.
-    }
+    void aplicar(Partido partido);
 }
