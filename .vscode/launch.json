@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run Skyfut Main",
+            "request": "launch",
+            "mainClass": "simulador.main.Main",
+            "cwd": "${workspaceFolder}/Skyfut"
+        }
+    ]
+}
