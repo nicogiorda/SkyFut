@@ -4,9 +4,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import simulador.composite.Partido;
 import simulador.domain.Equipo;
 import simulador.domain.IJugador;
 import simulador.dto.EquipoFixture;
+import simulador.motor.MotorSimulacion;
 import simulador.repositorio.RepositorioTorneo;
 import simulador.strategy.TacticaStrategy;
 
@@ -16,9 +18,11 @@ public class TorneoFacade {
     private static final int EQUIPOS_OCTAVOS = 16;
 
     private final RepositorioTorneo repositorioTorneo;
+    private final MotorSimulacion motor;
 
     public TorneoFacade() {
         this.repositorioTorneo = new RepositorioTorneo();
+        this.motor = new MotorSimulacion();
     }
 
     public void iniciarTorneo() {
@@ -32,6 +36,14 @@ public class TorneoFacade {
 
         Collections.shuffle(equipos);
         repositorioTorneo.guardarPartidosIniciales(idFaseOctavos, equipos);
+    }
+
+    public void simularPartido(Partido partido) {
+        motor.simularPartido(partido);
+    }
+
+    public void simularSiguientePartido() {
+        throw new UnsupportedOperationException("Falta cargar el siguiente partido desde RepositorioPartido");
     }
 
     private String generarNombreTorneo() {
