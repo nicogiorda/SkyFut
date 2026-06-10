@@ -1,19 +1,41 @@
 package simulador.facade;
 
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import simulador.domain.Equipo;
 import simulador.domain.IJugador;
-import simulador.persistence.DatabaseConnection;
+import simulador.dto.EquipoFixture;
+import simulador.repositorio.RepositorioTorneo;
 import simulador.strategy.TacticaStrategy;
 
 public class TorneoFacade {
-    private final DatabaseConnection db;
+    private static final String NOMBRE_TORNEO_BASE = "SkyFut Champions 2026";
+    private static final String FASE_OCTAVOS = "Octavos de Final";
+    private static final int EQUIPOS_OCTAVOS = 16;
 
-    public TorneoFacade() throws SQLException {
-        this.db = DatabaseConnection.getInstance();
+    private final RepositorioTorneo repositorioTorneo;
+
+    public TorneoFacade() {
+        this.repositorioTorneo = new RepositorioTorneo();
+    }
+
+    public void iniciarTorneo() {
+        int idTorneo = repositorioTorneo.crearTorneo(generarNombreTorneo());
+        int idFaseOctavos = repositorioTorneo.crearFase(idTorneo, FASE_OCTAVOS, 1);
+
+        List<EquipoFixture> equipos = repositorioTorneo.listarEquiposConPlantelCompleto(EQUIPOS_OCTAVOS);
+        if (equipos.size() != EQUIPOS_OCTAVOS) {
+            throw new IllegalStateException("Se necesitan exactamente 16 equipos para generar octavos");
+        }
+
+        Collections.shuffle(equipos);
+        repositorioTorneo.guardarPartidosIniciales(idFaseOctavos, equipos);
+    }
+
+    private String generarNombreTorneo() {
+        return NOMBRE_TORNEO_BASE + " - " + UUID.randomUUID().toString().substring(0, 8);
     }
 
     public List<Equipo> cargarEquipos() {
