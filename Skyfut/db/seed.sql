@@ -55,13 +55,6 @@ WHERE id_equipo IN (
     JOIN seed_equipo se ON se.nombre = e.nombre
 );
 
-DELETE FROM jugador
-WHERE id_equipo IN (
-    SELECT e.id
-    FROM equipo e
-    JOIN seed_equipo se ON se.nombre = e.nombre
-);
-
 CREATE TEMP TABLE IF NOT EXISTS seed_slot (
     dorsal INTEGER NOT NULL,
     nombre TEXT NOT NULL,

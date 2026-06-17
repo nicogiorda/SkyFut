@@ -8,6 +8,7 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import simulador.dto.EquipoFixture;
 import simulador.persistence.DatabaseConnection;
@@ -58,6 +59,19 @@ public class RepositorioTorneo {
         }
     }
 
+    public void asignarEquipoDT(int idTorneo, int idEquipo) {
+        String sql = "UPDATE torneo SET id_equipo_dt = ? WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idEquipo);
+            stmt.setInt(2, idTorneo);
+            stmt.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            rollback();
+            throw new IllegalStateException("No se pudo asignar el equipo del DT", e);
+        }
+    }
+
     public boolean faseTienePartidos(int idFase) {
         String sql = "SELECT COUNT(*) AS total FROM partido WHERE id_fase = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -67,6 +81,56 @@ public class RepositorioTorneo {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("No se pudo consultar los partidos de la fase", e);
+        }
+    }
+
+    public boolean faseCompleta(int idFase) {
+        String sql = """
+                SELECT COUNT(*) AS pendientes
+                FROM partido
+                WHERE id_fase = ?
+                  AND estado <> 'FINALIZADO'
+                """;
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idFase);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() && rs.getInt("pendientes") == 0;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("No se pudo consultar si la fase esta completa", e);
+        }
+    }
+
+    public void marcarFaseCompleta(int idFase) {
+        String sql = "UPDATE fase SET completada = 1 WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idFase);
+            stmt.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            rollback();
+            throw new IllegalStateException("No se pudo marcar la fase como completa", e);
+        }
+    }
+
+    public Optional<FaseInfo> buscarFaseDePartido(int idPartido) {
+        String sql = """
+                SELECT f.id, f.nombre, f.orden
+                FROM fase f
+                JOIN partido p ON p.id_fase = f.id
+                WHERE p.id = ?
+                """;
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idPartido);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.next()) return Optional.empty();
+                return Optional.of(new FaseInfo(
+                        rs.getInt("id"),
+                        rs.getString("nombre"),
+                        rs.getInt("orden")));
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("No se pudo buscar la fase del partido", e);
         }
     }
 
@@ -93,6 +157,41 @@ public class RepositorioTorneo {
             return equipos;
         } catch (SQLException e) {
             throw new IllegalStateException("No se pudieron listar los equipos del torneo", e);
+        }
+    }
+
+    public List<EquipoFixture> listarGanadoresFase(int idFase) {
+        String sql = """
+                SELECT e.id, e.id_tactica
+                FROM partido p
+                JOIN equipo e ON e.id = p.id_ganador
+                WHERE p.id_fase = ?
+                ORDER BY p.id
+                """;
+        List<EquipoFixture> ganadores = new ArrayList<>();
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idFase);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ganadores.add(new EquipoFixture(rs.getInt("id"), rs.getInt("id_tactica")));
+                }
+            }
+            return ganadores;
+        } catch (SQLException e) {
+            throw new IllegalStateException("No se pudieron listar los ganadores de la fase", e);
+        }
+    }
+
+    public boolean faseExiste(int idTorneo, int orden) {
+        String sql = "SELECT COUNT(*) AS total FROM fase WHERE id_torneo = ? AND orden = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idTorneo);
+            stmt.setInt(2, orden);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() && rs.getInt("total") > 0;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("No se pudo consultar si la fase existe", e);
         }
     }
 
@@ -127,7 +226,41 @@ public class RepositorioTorneo {
             connection.commit();
         } catch (SQLException e) {
             rollback();
-            throw new IllegalStateException("No se pudieron guardar los partidos iniciales", e);
+            throw new IllegalStateException("No se pudieron guardar los partidos de la fase", e);
+        }
+    }
+
+    public void finalizarTorneo(int idTorneo, int idCampeon) {
+        String sql = "UPDATE torneo SET estado = 'FINALIZADO', id_campeon = ? WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idCampeon);
+            stmt.setInt(2, idTorneo);
+            stmt.executeUpdate();
+            connection.commit();
+        } catch (SQLException e) {
+            rollback();
+            throw new IllegalStateException("No se pudo finalizar el torneo", e);
+        }
+    }
+
+    public Optional<String> buscarNombreCampeon(int idTorneo) {
+        String sql = """
+                SELECT e.nombre AS campeon
+                FROM torneo t
+                JOIN equipo e ON e.id = t.id_campeon
+                WHERE t.id = ?
+                  AND t.estado = 'FINALIZADO'
+                """;
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idTorneo);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(rs.getString("campeon"));
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("No se pudo consultar el campeon del torneo", e);
         }
     }
 
@@ -145,5 +278,8 @@ public class RepositorioTorneo {
             connection.rollback();
         } catch (SQLException ignored) {
         }
+    }
+
+    public record FaseInfo(int id, String nombre, int orden) {
     }
 }

@@ -71,8 +71,11 @@ public class Partido implements ComponenteTorneo {
     }
 
     public Equipo getGanador() {
-        if (!estaCompleto() || golesLocal == golesVisitante) {
+        if (!estaCompleto()) {
             return null;
+        }
+        if (golesLocal == golesVisitante) {
+            return local.getRendimientoTotal() >= visitante.getRendimientoTotal() ? local : visitante;
         }
         return golesLocal > golesVisitante ? local : visitante;
     }

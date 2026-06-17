@@ -2,7 +2,6 @@ package simulador.facade;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,9 @@ import simulador.domain.Equipo;
 import simulador.domain.EstadisticasJugador;
 import simulador.domain.IJugador;
 import simulador.dto.EquipoFixture;
+import simulador.dto.FixturePartido;
 import simulador.dto.ResumenTorneo;
+import simulador.events.Cambio;
 import simulador.events.EventoPartido;
 import simulador.events.Gol;
 import simulador.events.Lesion;
@@ -35,7 +36,9 @@ public class TorneoFacade {
     private final MotorSimulacion motor;
 
     private int idTorneo = -1;
-    private Partido partidoActual = null;
+    private String nombreTorneoActual = NOMBRE_TORNEO_BASE;
+    private Equipo equipoDt;
+    private Partido partidoActual;
 
     public TorneoFacade() {
         this.repositorioTorneo = new RepositorioTorneo();
@@ -45,7 +48,12 @@ public class TorneoFacade {
     }
 
     public void iniciarTorneo() {
-        idTorneo = repositorioTorneo.crearTorneo(generarNombreTorneo());
+        nombreTorneoActual = generarNombreTorneo();
+        idTorneo = repositorioTorneo.crearTorneo(nombreTorneoActual);
+        if (equipoDt != null) {
+            repositorioTorneo.asignarEquipoDT(idTorneo, equipoDt.getId());
+        }
+
         int idFaseOctavos = repositorioTorneo.crearFase(idTorneo, FASE_OCTAVOS, 1);
 
         List<EquipoFixture> equipos = repositorioTorneo.listarEquiposConPlantelCompleto(EQUIPOS_OCTAVOS);
@@ -57,42 +65,79 @@ public class TorneoFacade {
         repositorioTorneo.guardarPartidosIniciales(idFaseOctavos, equipos);
     }
 
-    public void simularPartido(Partido partido) {
-        motor.simularPartido(partido);
+    public Partido prepararSiguientePartido() {
+        validarTorneoIniciado();
+        partidoActual = repositorioPartido.buscarSiguientePartidoNoIniciado(idTorneo)
+                .orElseThrow(() -> new IllegalStateException("No hay partidos pendientes"));
+        return partidoActual;
     }
 
     public void simularSiguientePartido() {
-        Partido partido = repositorioPartido.buscarSiguientePartidoNoIniciado()
-                .orElseThrow(() -> new IllegalStateException("No hay partidos pendientes"));
+        Partido partido = prepararSiguientePartido();
+        if (partidoEsDelDT(partido)) {
+            motor.simularPrimerTiempo(partido);
+            return;
+        }
 
-        partidoActual = partido;
         motor.simularPartido(partido);
+        cerrarPartido(partido, true);
+    }
 
-        List<EstadisticasJugador> stats = calcularEstadisticas(partido);
-        repositorioPartido.guardarResultado(partido);
-        repositorioPartido.guardarEventos(partido);
-        repositorioPartido.guardarEstadisticas(partido.getId(), stats);
+    public void simularPrimerTiempoPartidoActual() {
+        validarPartidoActual();
+        motor.simularPrimerTiempo(partidoActual);
+    }
+
+    public void simularSegundoTiempoPartidoActual() {
+        validarPartidoActual();
+        simularCambiosAutomaticosRivalesEntretiempo();
+        motor.simularSegundoTiempo(partidoActual);
+        cerrarPartido(partidoActual, true);
+    }
+
+    public void simularRestoTorneoAutomatico() {
+        validarTorneoIniciado();
+        while (true) {
+            Partido partido = repositorioPartido.buscarSiguientePartidoNoIniciado(idTorneo).orElse(null);
+            if (partido == null) {
+                return;
+            }
+            partidoActual = partido;
+            motor.simularPartido(partido);
+            cerrarPartido(partido, false);
+        }
     }
 
     public ResumenTorneo consultarResultados() {
-        if (idTorneo < 0) {
-            throw new IllegalStateException("El torneo no ha sido iniciado");
-        }
-        return repositorioPartido.consultarResumen(idTorneo, NOMBRE_TORNEO_BASE);
+        validarTorneoIniciado();
+        return repositorioPartido.consultarResumen(idTorneo, nombreTorneoActual);
     }
 
-    // Solo permitido durante Entretiempo (validado por State)
+    public List<FixturePartido> consultarFixture() {
+        validarTorneoIniciado();
+        return repositorioPartido.listarFixture(idTorneo);
+    }
+
+    public String consultarCampeon() {
+        validarTorneoIniciado();
+        return repositorioTorneo.buscarNombreCampeon(idTorneo).orElse(null);
+    }
+
     public void realizarCambio(Equipo equipo, IJugador sale, IJugador entra) {
-        if (partidoActual == null || !partidoActual.getEstado().permiteCambios()) {
-            throw new IllegalStateException("Los cambios solo están permitidos durante el entretiempo");
+        validarPartidoActual();
+        if (!partidoActual.getEstado().permiteCambios()) {
+            throw new IllegalStateException("Los cambios solo estan permitidos durante el entretiempo");
         }
-        equipo.sustituir(sale, entra);
+
+        Cambio cambio = new Cambio(partidoActual.getMinuto(), sale, entra, equipo);
+        cambio.aplicar(partidoActual);
+        partidoActual.registrarEvento(cambio);
     }
 
-    // Solo permitido durante Entretiempo (validado por State)
     public void cambiarTactica(Equipo equipo, TacticaStrategy tactica) {
-        if (partidoActual == null || !partidoActual.getEstado().permiteCambios()) {
-            throw new IllegalStateException("El cambio de táctica solo está permitido durante el entretiempo");
+        validarPartidoActual();
+        if (!partidoActual.getEstado().permiteCambios()) {
+            throw new IllegalStateException("El cambio de tactica solo esta permitido durante el entretiempo");
         }
         equipo.setTactica(tactica);
     }
@@ -102,42 +147,174 @@ public class TorneoFacade {
     }
 
     public Equipo seleccionarEquipo(int id) {
-        return repositorioEquipo.buscarPorId(id)
+        equipoDt = repositorioEquipo.buscarPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException("No existe un equipo con id " + id));
+        if (idTorneo > 0) {
+            repositorioTorneo.asignarEquipoDT(idTorneo, equipoDt.getId());
+        }
+        return equipoDt;
+    }
+
+    public Partido getPartidoActual() {
+        return partidoActual;
+    }
+
+    public Equipo getEquipoDt() {
+        return equipoDt;
+    }
+
+    public boolean torneoIniciado() {
+        return idTorneo > 0;
+    }
+
+    public boolean partidoActualEsDelDT() {
+        return partidoActual != null && partidoEsDelDT(partidoActual);
+    }
+
+    public boolean partidoActualEstaEnEntretiempo() {
+        return partidoActual != null && partidoActual.getEstado().permiteCambios();
+    }
+
+    private void simularCambiosAutomaticosRivalesEntretiempo() {
+        if (!partidoActual.getEstado().permiteCambios()) {
+            return;
+        }
+
+        if (!partidoActualEsDelDT()) {
+            motor.simularCambiosAutomaticosEntretiempo(partidoActual);
+            return;
+        }
+
+        if (equipoDt == null) {
+            return;
+        }
+
+        Equipo rival = partidoActual.getLocal().getId() == equipoDt.getId()
+                ? partidoActual.getVisitante()
+                : partidoActual.getLocal();
+        motor.simularCambioAutomaticoEntretiempo(partidoActual, rival);
+    }
+
+    private void cerrarPartido(Partido partido, boolean simularRestoSiDtEliminado) {
+        List<EstadisticasJugador> stats = calcularEstadisticas(partido);
+        repositorioPartido.guardarResultado(partido);
+        repositorioPartido.guardarEventos(partido);
+        repositorioPartido.guardarEstadisticas(partido.getId(), stats);
+        for (EstadisticasJugador stat : stats) {
+            repositorioPartido.actualizarEstadoJugadorTorneo(idTorneo, stat);
+        }
+
+        avanzarFaseSiCorresponde(partido);
+
+        if (simularRestoSiDtEliminado && equipoDt != null && partidoEsDelDT(partido) && !equipoDtGano(partido)) {
+            simularRestoTorneoAutomatico();
+        }
+    }
+
+    private void avanzarFaseSiCorresponde(Partido partido) {
+        RepositorioTorneo.FaseInfo fase = repositorioTorneo.buscarFaseDePartido(partido.getId())
+                .orElseThrow(() -> new IllegalStateException("No se encontro la fase del partido"));
+
+        if (!repositorioTorneo.faseCompleta(fase.id())) {
+            return;
+        }
+
+        repositorioTorneo.marcarFaseCompleta(fase.id());
+        List<EquipoFixture> ganadores = repositorioTorneo.listarGanadoresFase(fase.id());
+
+        if (ganadores.size() == 1) {
+            repositorioTorneo.finalizarTorneo(idTorneo, ganadores.get(0).idEquipo());
+            repositorioPartido.limpiarEstadisticasTorneo(idTorneo);
+            return;
+        }
+
+        int ordenSiguiente = fase.orden() + 1;
+        if (repositorioTorneo.faseExiste(idTorneo, ordenSiguiente)) {
+            return;
+        }
+
+        int idFaseSiguiente = repositorioTorneo.crearFase(
+                idTorneo,
+                nombreFaseSiguiente(ganadores.size()),
+                ordenSiguiente);
+        repositorioTorneo.guardarPartidosIniciales(idFaseSiguiente, ganadores);
+    }
+
+    private String nombreFaseSiguiente(int cantidadEquipos) {
+        return switch (cantidadEquipos) {
+            case 8 -> "Cuartos de Final";
+            case 4 -> "Semifinal";
+            case 2 -> "Final";
+            default -> "Fase " + cantidadEquipos + " equipos";
+        };
     }
 
     private List<EstadisticasJugador> calcularEstadisticas(Partido partido) {
-        Map<String, EstadisticasJugador> statsMap = new LinkedHashMap<>();
+        Map<Integer, EstadisticasJugador> statsMap = new LinkedHashMap<>();
+        registrarPlantelCompleto(statsMap, partido.getLocal(), partido.getMinuto());
+        registrarPlantelCompleto(statsMap, partido.getVisitante(), partido.getMinuto());
 
-        // Inicializa stats para todos los titulares de ambos equipos al final del partido
-        for (IJugador j : partido.getLocal().getTitulares()) {
-            EstadisticasJugador s = new EstadisticasJugador(j, partido.getLocal().getId());
-            s.setMinutosJugados(partido.getMinuto());
-            s.setRendimientoFinal(j.getRendimiento());
-            statsMap.put(j.getNombre(), s);
-        }
-        for (IJugador j : partido.getVisitante().getTitulares()) {
-            EstadisticasJugador s = new EstadisticasJugador(j, partido.getVisitante().getId());
-            s.setMinutosJugados(partido.getMinuto());
-            s.setRendimientoFinal(j.getRendimiento());
-            statsMap.put(j.getNombre(), s);
-        }
-
-        // Acumula goles, tarjetas y lesiones desde los eventos registrados
         for (EventoPartido e : partido.getEventos()) {
             if (e instanceof Gol gol) {
-                EstadisticasJugador s = statsMap.get(gol.getAutor().getNombre());
-                if (s != null) s.incrementarGoles();
+                EstadisticasJugador s = obtenerStats(statsMap, gol.getAutor(), gol.getEquipo(), partido.getMinuto());
+                s.incrementarGoles();
             } else if (e instanceof Tarjeta t) {
-                EstadisticasJugador s = statsMap.get(t.getJugador().getNombre());
-                if (s != null) s.incrementarTarjetas();
+                EstadisticasJugador s = obtenerStats(statsMap, t.getJugador(), t.getEquipo(), partido.getMinuto());
+                s.incrementarTarjetas();
             } else if (e instanceof Lesion l) {
-                EstadisticasJugador s = statsMap.get(l.getJugador().getNombre());
-                if (s != null) s.setLesionado(true);
+                EstadisticasJugador s = obtenerStats(statsMap, l.getJugador(), l.getEquipo(), partido.getMinuto());
+                s.setLesionado(true);
+            } else if (e instanceof Cambio c) {
+                obtenerStats(statsMap, c.getSale(), c.getEquipo(), c.getMinuto()).setMinutosJugados(c.getMinuto());
+                obtenerStats(statsMap, c.getEntra(), c.getEquipo(), partido.getMinuto());
             }
         }
 
         return new ArrayList<>(statsMap.values());
+    }
+
+    private void registrarPlantelCompleto(Map<Integer, EstadisticasJugador> statsMap, Equipo equipo, int minutos) {
+        for (IJugador jugador : equipo.getTitulares()) {
+            obtenerStats(statsMap, jugador, equipo, minutos);
+        }
+        for (IJugador jugador : equipo.getSuplentes()) {
+            obtenerStats(statsMap, jugador, equipo, 0);
+        }
+    }
+
+    private EstadisticasJugador obtenerStats(
+            Map<Integer, EstadisticasJugador> statsMap,
+            IJugador jugador,
+            Equipo equipo,
+            int minutosJugados) {
+        EstadisticasJugador stats = statsMap.computeIfAbsent(jugador.getId(), id -> new EstadisticasJugador(jugador, equipo.getId()));
+        stats.setMinutosJugados(Math.max(stats.getMinutosJugados(), minutosJugados));
+        stats.setRendimientoFinal(jugador.getRendimiento());
+        return stats;
+    }
+
+    private boolean partidoEsDelDT(Partido partido) {
+        if (equipoDt == null) {
+            return false;
+        }
+        return partido.getLocal().getId() == equipoDt.getId()
+                || partido.getVisitante().getId() == equipoDt.getId();
+    }
+
+    private boolean equipoDtGano(Partido partido) {
+        return partido.getGanador() != null && partido.getGanador().getId() == equipoDt.getId();
+    }
+
+    private void validarTorneoIniciado() {
+        if (idTorneo < 0) {
+            throw new IllegalStateException("El torneo no ha sido iniciado");
+        }
+    }
+
+    private void validarPartidoActual() {
+        if (partidoActual == null) {
+            throw new IllegalStateException("No hay un partido actual");
+        }
     }
 
     private String generarNombreTorneo() {

@@ -13,43 +13,84 @@ import simulador.events.TarjetaFactory;
 
 public class MotorSimulacion {
     private final List<EventoFactory> eventoFactories;
+    private final CambioFactory cambioFactory;
 
     public MotorSimulacion() {
         this(List.of(
                 new GolFactory(),
                 new TarjetaFactory(),
-                new LesionFactory(),
-                new CambioFactory()));
+                new LesionFactory()));
     }
 
     public MotorSimulacion(List<EventoFactory> eventoFactories) {
         this.eventoFactories = List.copyOf(eventoFactories);
+        this.cambioFactory = new CambioFactory();
     }
 
     public void simularPartido(Partido partido) {
-        partido.iniciar();
+        simularPrimerTiempo(partido);
+        simularCambiosAutomaticosEntretiempo(partido);
+        simularSegundoTiempo(partido);
+    }
+
+    public void simularPrimerTiempo(Partido partido) {
+        if (partido.getMinuto() == 0) {
+            partido.iniciar();
+        }
+
+        while (!partido.getEstado().permiteCambios() && !partido.estaCompleto()) {
+            simularMinuto(partido);
+        }
+    }
+
+    public void simularSegundoTiempo(Partido partido) {
+        if (!partido.getEstado().permiteCambios()) {
+            throw new IllegalStateException("El segundo tiempo solo puede iniciarse desde el entretiempo");
+        }
 
         while (!partido.estaCompleto()) {
-            partido.avanzarMinuto();
-
-            if (!partido.getEstado().permiteEventosJuego()) {
-                continue;
-            }
-
-            ContextoEvento contexto = new ContextoEvento(
-                    partido.getMinuto(),
-                    partido.getLocal(),
-                    partido.getVisitante(),
-                    partido.getMinuto() > 45);
-
-            for (EventoFactory factory : eventoFactories) {
-                factory.crearEvento(contexto).ifPresent(evento -> aplicarYRegistrar(partido, evento));
-            }
+            simularMinuto(partido);
         }
+    }
+
+    public void simularCambiosAutomaticosEntretiempo(Partido partido) {
+        if (!partido.getEstado().permiteCambios()) {
+            throw new IllegalStateException("Los cambios automaticos solo pueden ejecutarse en entretiempo");
+        }
+
+        simularCambioAutomaticoEntretiempo(partido, partido.getLocal());
+        simularCambioAutomaticoEntretiempo(partido, partido.getVisitante());
+    }
+
+    public void simularCambioAutomaticoEntretiempo(Partido partido, simulador.domain.Equipo equipo) {
+        if (!partido.getEstado().permiteCambios()) {
+            throw new IllegalStateException("Los cambios automaticos solo pueden ejecutarse en entretiempo");
+        }
+
+        cambioFactory.crearCambioAutomatico(partido.getMinuto(), equipo)
+                .ifPresent(evento -> aplicarYRegistrar(partido, evento));
     }
 
     public void simularAutomatico(Partido partido) {
         simularPartido(partido);
+    }
+
+    private void simularMinuto(Partido partido) {
+        partido.avanzarMinuto();
+
+        if (!partido.getEstado().permiteEventosJuego()) {
+            return;
+        }
+
+        ContextoEvento contexto = new ContextoEvento(
+                partido.getMinuto(),
+                partido.getLocal(),
+                partido.getVisitante(),
+                partido.getMinuto() > 45);
+
+        for (EventoFactory factory : eventoFactories) {
+            factory.crearEvento(contexto).ifPresent(evento -> aplicarYRegistrar(partido, evento));
+        }
     }
 
     private void aplicarYRegistrar(Partido partido, EventoPartido evento) {

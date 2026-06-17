@@ -6,12 +6,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import simulador.composite.Partido;
 import simulador.domain.Equipo;
 import simulador.domain.EstadisticasJugador;
+import simulador.dto.FixturePartido;
 import simulador.dto.Goleador;
 import simulador.dto.ResumenTorneo;
 import simulador.dto.ResultadoPartido;
@@ -39,15 +42,29 @@ public class RepositorioPartido {
         String sql = "SELECT id, id_equipo_local, id_equipo_visit FROM partido WHERE estado = 'NO_INICIADO' ORDER BY id LIMIT 1";
         try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
-            if (!rs.next()) return Optional.empty();
-            int id = rs.getInt("id");
-            Equipo local = repositorioEquipo.buscarPorId(rs.getInt("id_equipo_local"))
-                    .orElseThrow(() -> new IllegalStateException("No se encontró equipo local"));
-            Equipo visitante = repositorioEquipo.buscarPorId(rs.getInt("id_equipo_visit"))
-                    .orElseThrow(() -> new IllegalStateException("No se encontró equipo visitante"));
-            return Optional.of(new Partido(id, local, visitante));
+            return mapearSiguientePartido(rs);
         } catch (SQLException e) {
             throw new IllegalStateException("Error al buscar siguiente partido", e);
+        }
+    }
+
+    public Optional<Partido> buscarSiguientePartidoNoIniciado(int idTorneo) {
+        String sql = """
+                SELECT p.id, p.id_equipo_local, p.id_equipo_visit
+                FROM partido p
+                JOIN fase f ON f.id = p.id_fase
+                WHERE f.id_torneo = ?
+                  AND p.estado = 'NO_INICIADO'
+                ORDER BY f.orden, p.id
+                LIMIT 1
+                """;
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idTorneo);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return mapearSiguientePartido(rs);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Error al buscar siguiente partido del torneo", e);
         }
     }
 
@@ -82,8 +99,8 @@ public class RepositorioPartido {
                 stmt.setInt(1, partido.getId());
                 stmt.setString(2, e.getTipo());
                 stmt.setInt(3, e.getMinuto());
-                stmt.setString(7, e.getDescripcion());
                 setParametrosEvento(stmt, e);
+                stmt.setString(7, e.getDescripcion());
                 stmt.addBatch();
             }
             stmt.executeBatch();
@@ -91,31 +108,6 @@ public class RepositorioPartido {
         } catch (SQLException e) {
             rollback();
             throw new IllegalStateException("Error al guardar eventos del partido", e);
-        }
-    }
-
-    private void setParametrosEvento(PreparedStatement stmt, EventoPartido evento) throws SQLException {
-        // params 4=id_jugador_principal, 5=id_jugador_secundario, 6=id_equipo
-        if (evento instanceof Gol gol) {
-            stmt.setInt(4, gol.getAutor().getId());
-            stmt.setNull(5, Types.INTEGER);
-            stmt.setInt(6, gol.getEquipo().getId());
-        } else if (evento instanceof Tarjeta t) {
-            stmt.setInt(4, t.getJugador().getId());
-            stmt.setNull(5, Types.INTEGER);
-            stmt.setInt(6, t.getEquipo().getId());
-        } else if (evento instanceof Lesion l) {
-            stmt.setInt(4, l.getJugador().getId());
-            stmt.setNull(5, Types.INTEGER);
-            stmt.setInt(6, l.getEquipo().getId());
-        } else if (evento instanceof Cambio c) {
-            stmt.setInt(4, c.getSale().getId());
-            stmt.setInt(5, c.getEntra().getId());
-            stmt.setInt(6, c.getEquipo().getId());
-        } else {
-            stmt.setNull(4, Types.INTEGER);
-            stmt.setNull(5, Types.INTEGER);
-            stmt.setNull(6, Types.INTEGER);
         }
     }
 
@@ -143,7 +135,7 @@ public class RepositorioPartido {
             connection.commit();
         } catch (SQLException e) {
             rollback();
-            throw new IllegalStateException("Error al guardar estadísticas del partido", e);
+            throw new IllegalStateException("Error al guardar estadisticas del partido", e);
         }
     }
 
@@ -179,6 +171,108 @@ public class RepositorioPartido {
         return new ResumenTorneo(nombreTorneo, resultados, goleadores, completo);
     }
 
+    public List<FixturePartido> listarFixture(int idTorneo) {
+        String sql = """
+                SELECT f.orden AS fase_orden, f.nombre AS fase_nombre, p.id AS partido_id,
+                       p.goles_local, p.goles_visitante, p.estado,
+                       el.nombre AS local, ev.nombre AS visitante,
+                       eg.nombre AS ganador
+                FROM partido p
+                JOIN fase f ON p.id_fase = f.id
+                JOIN equipo el ON p.id_equipo_local = el.id
+                JOIN equipo ev ON p.id_equipo_visit = ev.id
+                LEFT JOIN equipo eg ON p.id_ganador = eg.id
+                WHERE f.id_torneo = ?
+                ORDER BY f.orden, p.id
+                """;
+        List<FixturePartido> fixture = new ArrayList<>();
+        Map<Integer, Integer> ordenPorFase = new HashMap<>();
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idTorneo);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int faseOrden = rs.getInt("fase_orden");
+                    int ordenPartido = ordenPorFase.merge(faseOrden, 1, Integer::sum);
+                    fixture.add(new FixturePartido(
+                            faseOrden,
+                            rs.getString("fase_nombre"),
+                            rs.getInt("partido_id"),
+                            ordenPartido,
+                            rs.getString("local"),
+                            rs.getString("visitante"),
+                            rs.getInt("goles_local"),
+                            rs.getInt("goles_visitante"),
+                            rs.getString("ganador"),
+                            rs.getString("estado")));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Error al listar fixture", e);
+        }
+        return fixture;
+    }
+
+    public void limpiarEstadisticasTorneo(int idTorneo) {
+        try {
+            try (PreparedStatement stmt = connection.prepareStatement("""
+                    DELETE FROM estadistica_jugador
+                    WHERE id_partido IN (
+                        SELECT p.id
+                        FROM partido p
+                        JOIN fase f ON f.id = p.id_fase
+                        WHERE f.id_torneo = ?
+                    )
+                    """)) {
+                stmt.setInt(1, idTorneo);
+                stmt.executeUpdate();
+            }
+
+            try (PreparedStatement stmt = connection.prepareStatement(
+                    "DELETE FROM estado_jugador_torneo WHERE id_torneo = ?")) {
+                stmt.setInt(1, idTorneo);
+                stmt.executeUpdate();
+            }
+            connection.commit();
+        } catch (SQLException e) {
+            rollback();
+            throw new IllegalStateException("Error al limpiar estadisticas del torneo", e);
+        }
+    }
+
+    private Optional<Partido> mapearSiguientePartido(ResultSet rs) throws SQLException {
+        if (!rs.next()) return Optional.empty();
+        int id = rs.getInt("id");
+        Equipo local = repositorioEquipo.buscarPorId(rs.getInt("id_equipo_local"))
+                .orElseThrow(() -> new IllegalStateException("No se encontro equipo local"));
+        Equipo visitante = repositorioEquipo.buscarPorId(rs.getInt("id_equipo_visit"))
+                .orElseThrow(() -> new IllegalStateException("No se encontro equipo visitante"));
+        return Optional.of(new Partido(id, local, visitante));
+    }
+
+    private void setParametrosEvento(PreparedStatement stmt, EventoPartido evento) throws SQLException {
+        if (evento instanceof Gol gol) {
+            stmt.setInt(4, gol.getAutor().getId());
+            stmt.setNull(5, Types.INTEGER);
+            stmt.setInt(6, gol.getEquipo().getId());
+        } else if (evento instanceof Tarjeta t) {
+            stmt.setInt(4, t.getJugador().getId());
+            stmt.setNull(5, Types.INTEGER);
+            stmt.setInt(6, t.getEquipo().getId());
+        } else if (evento instanceof Lesion l) {
+            stmt.setInt(4, l.getJugador().getId());
+            stmt.setNull(5, Types.INTEGER);
+            stmt.setInt(6, l.getEquipo().getId());
+        } else if (evento instanceof Cambio c) {
+            stmt.setInt(4, c.getSale().getId());
+            stmt.setInt(5, c.getEntra().getId());
+            stmt.setInt(6, c.getEquipo().getId());
+        } else {
+            stmt.setNull(4, Types.INTEGER);
+            stmt.setNull(5, Types.INTEGER);
+            stmt.setNull(6, Types.INTEGER);
+        }
+    }
+
     private List<ResultadoPartido> listarResultados(int idTorneo) {
         String sql = """
                 SELECT p.goles_local, p.goles_visitante, p.estado,
@@ -190,7 +284,7 @@ public class RepositorioPartido {
                 JOIN equipo ev ON p.id_equipo_visit = ev.id
                 LEFT JOIN equipo eg ON p.id_ganador = eg.id
                 WHERE f.id_torneo = ?
-                ORDER BY p.id
+                ORDER BY f.orden, p.id
                 """;
         List<ResultadoPartido> resultados = new ArrayList<>();
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {

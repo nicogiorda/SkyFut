@@ -9,7 +9,7 @@ import simulador.dto.ContextoEvento;
 
 
 public class CambioFactory implements EventoFactory {
-    private static final double PROBABILIDAD_CAMBIO = 0.015;
+    private static final double PROBABILIDAD_CAMBIO_ENTRETIEMPO = 0.65;
     private final Random random = new Random();
     private final IJugador sale;
     private final IJugador entra;
@@ -34,11 +34,19 @@ public class CambioFactory implements EventoFactory {
             return Optional.of(new Cambio(ctx.getMinuto(), sale, entra, equipo));
         }
 
-        if (!ctx.isEsSegundoTiempo() || ctx.getMinuto() < 60 || random.nextDouble() >= PROBABILIDAD_CAMBIO) {
+        if (ctx.getMinuto() != 45 || ctx.isEsSegundoTiempo()) {
             return Optional.empty();
         }
 
         Equipo equipoCambio = random.nextBoolean() ? ctx.getLocal() : ctx.getVisitante();
+        return crearCambioAutomatico(ctx.getMinuto(), equipoCambio);
+    }
+
+    public Optional<EventoPartido> crearCambioAutomatico(int minuto, Equipo equipoCambio) {
+        if (random.nextDouble() >= PROBABILIDAD_CAMBIO_ENTRETIEMPO) {
+            return Optional.empty();
+        }
+
         List<IJugador> titulares = equipoCambio.getTitulares();
         List<IJugador> suplentes = equipoCambio.getSuplentes();
         if (titulares.isEmpty() || suplentes.isEmpty()) {
@@ -47,6 +55,6 @@ public class CambioFactory implements EventoFactory {
 
         IJugador jugadorSale = titulares.get(random.nextInt(titulares.size()));
         IJugador jugadorEntra = suplentes.get(random.nextInt(suplentes.size()));
-        return Optional.of(new Cambio(ctx.getMinuto(), jugadorSale, jugadorEntra, equipoCambio));
+        return Optional.of(new Cambio(minuto, jugadorSale, jugadorEntra, equipoCambio));
     }
 }
