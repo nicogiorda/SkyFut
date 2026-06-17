@@ -22,6 +22,9 @@ public class Lesion implements EventoPartido {
         equipoPartido.decorarTitular(jugador, LesionDecorator::new);
     }
 
+    public IJugador getJugador() { return jugador; }
+    public Equipo getEquipo() { return equipo; }
+
     @Override
     public int getMinuto() {
         return minuto;

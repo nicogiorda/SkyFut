@@ -29,6 +29,10 @@ public class Cambio implements EventoPartido {
         equipo.sustituir(sale, entra);
     }
 
+    public IJugador getSale() { return sale; }
+    public IJugador getEntra() { return entra; }
+    public Equipo getEquipo() { return equipo; }
+
     @Override public int getMinuto() { return minuto; }
     @Override public String getTipo() { return "CAMBIO"; }
     @Override public String getDescripcion() {

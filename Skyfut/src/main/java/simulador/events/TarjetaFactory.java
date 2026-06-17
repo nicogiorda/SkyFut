@@ -9,21 +9,18 @@ import simulador.domain.IJugador;
 import simulador.dto.ContextoEvento;
 
 public class TarjetaFactory implements EventoFactory {
-    private static final double PROB_BASE = 0.02; // 2% por minuto
+    private static final double PROB_BASE = 0.02;
+    private final Random random = new Random();
 
     @Override
     public Optional<EventoPartido> crearEvento(ContextoEvento ctx) {
-        if (Math.random() > PROB_BASE) return Optional.empty();
+        if (random.nextDouble() > PROB_BASE) return Optional.empty();
 
-        // la tarjeta puede ser para cualquier equipo
-        Equipo equipo = Math.random() < 0.5 ? ctx.getLocal() : ctx.getVisitante();
-        IJugador jugador = elegirJugador(equipo);
-
-        return Optional.of(new Tarjeta(ctx.getMinuto(), jugador, equipo));
-    }
-
-    private IJugador elegirJugador(Equipo equipo) {
+        Equipo equipo = random.nextBoolean() ? ctx.getLocal() : ctx.getVisitante();
         List<IJugador> titulares = equipo.getTitulares();
-        return titulares.get((int)(Math.random() * titulares.size()));
+        if (titulares.isEmpty()) return Optional.empty();
+
+        IJugador jugador = titulares.get(random.nextInt(titulares.size()));
+        return Optional.of(new Tarjeta(ctx.getMinuto(), jugador, equipo));
     }
 }

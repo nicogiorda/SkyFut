@@ -10,6 +10,9 @@ public abstract class JugadorDecorator implements IJugador {
     }
 
     @Override
+    public int getId() { return jugador.getId(); }
+
+    @Override
     public String getNombre() {
         return jugador.getNombre();
     }

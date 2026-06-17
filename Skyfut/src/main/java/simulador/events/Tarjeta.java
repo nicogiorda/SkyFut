@@ -31,6 +31,9 @@ public class Tarjeta implements EventoPartido {
         eq.decorarTitular(jugador, j -> new TarjetaAmarillaDecorator(j));
     }
 
+    public IJugador getJugador() { return jugador; }
+    public Equipo getEquipo() { return equipo; }
+
     @Override public int getMinuto() { return minuto; }
     @Override public String getTipo() { return "TARJETA"; }
     @Override public String getDescripcion() {

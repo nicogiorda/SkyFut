@@ -39,8 +39,11 @@ public class Gol implements EventoPartido {
         return "Gol de " + autor.getNombre() + " (min. " + minuto + ")";
     }
 
+    public IJugador getAutor() {
+        return autor;
+    }
+
     public Equipo getEquipo() {
         return equipo;
     }
-    
 }
