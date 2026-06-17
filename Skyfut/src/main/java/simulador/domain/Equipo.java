@@ -7,20 +7,30 @@ import java.util.function.Function;
 import simulador.strategy.TacticaStrategy;
 
 public class Equipo {
+    private int id;
     private String nombre;
     private List<IJugador> titulares;
     private List<IJugador> suplentes;
     private TacticaStrategy tactica;
 
     public Equipo(String nombre) {
-        this(nombre, new ArrayList<>(), new ArrayList<>(), null);
+        this(0, nombre, new ArrayList<>(), new ArrayList<>(), null);
     }
 
     public Equipo(String nombre, List<IJugador> titulares, List<IJugador> suplentes, TacticaStrategy tactica) {
+        this(0, nombre, titulares, suplentes, tactica);
+    }
+
+    public Equipo(int id, String nombre, List<IJugador> titulares, List<IJugador> suplentes, TacticaStrategy tactica) {
+        this.id = id;
         this.nombre = nombre;
         this.titulares = new ArrayList<>(titulares);
         this.suplentes = new ArrayList<>(suplentes);
         this.tactica = tactica;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getNombre() {

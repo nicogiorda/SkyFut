@@ -9,6 +9,7 @@ import simulador.domain.Equipo;
 import simulador.domain.IJugador;
 import simulador.dto.EquipoFixture;
 import simulador.motor.MotorSimulacion;
+import simulador.repositorio.RepositorioEquipo;
 import simulador.repositorio.RepositorioTorneo;
 import simulador.strategy.TacticaStrategy;
 
@@ -18,10 +19,12 @@ public class TorneoFacade {
     private static final int EQUIPOS_OCTAVOS = 16;
 
     private final RepositorioTorneo repositorioTorneo;
+    private final RepositorioEquipo repositorioEquipo;
     private final MotorSimulacion motor;
 
     public TorneoFacade() {
         this.repositorioTorneo = new RepositorioTorneo();
+        this.repositorioEquipo = new RepositorioEquipo();
         this.motor = new MotorSimulacion();
     }
 
@@ -51,11 +54,12 @@ public class TorneoFacade {
     }
 
     public List<Equipo> cargarEquipos() {
-        return Collections.emptyList();
+        return repositorioEquipo.listarEquipos();
     }
 
     public Equipo seleccionarEquipo(int id) {
-        return null;
+        return repositorioEquipo.buscarPorId(id)
+                .orElseThrow(() -> new IllegalArgumentException("No existe un equipo con id " + id));
     }
 
     public void realizarCambio(Equipo equipo, IJugador sale, IJugador entra) {
