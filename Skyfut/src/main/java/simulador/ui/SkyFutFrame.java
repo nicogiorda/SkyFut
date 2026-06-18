@@ -1,10 +1,23 @@
 package simulador.ui;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,17 +28,18 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 
 import simulador.composite.Partido;
 import simulador.decorator.JugadorDecorator;
@@ -42,6 +56,17 @@ import simulador.strategy.TacticaOfensiva;
 import simulador.strategy.TacticaStrategy;
 
 public class SkyFutFrame extends JFrame {
+    private static final Color BLACK = Color.BLACK;
+    private static final Color INK = new Color(8, 8, 10);
+    private static final Color WHITE = new Color(252, 252, 250);
+    private static final Color PURPLE = new Color(82, 0, 220);
+    private static final Color CYAN = new Color(0, 207, 221);
+    private static final Color LIME = new Color(174, 232, 0);
+    private static final Color RED = new Color(242, 5, 5);
+    private static final Font TITLE_FONT = new Font("Arial Black", Font.BOLD, 24);
+    private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 16);
+    private static final Font BODY_FONT = new Font("Arial", Font.BOLD, 15);
+
     private final TorneoFacade facade;
 
     private final JComboBox<Equipo> equipoCombo;
@@ -49,15 +74,17 @@ public class SkyFutFrame extends JFrame {
     private final JComboBox<IJugador> entraCombo;
     private final JComboBox<TacticaOption> tacticaCombo;
 
-    private final JButton seleccionarEquipoButton;
-    private final JButton iniciarTorneoButton;
-    private final JButton simularSiguienteButton;
-    private final JButton confirmarCambioButton;
-    private final JButton aplicarTacticaButton;
-    private final JButton simularSegundoTiempoButton;
-    private final JButton verFixtureButton;
-    private final JButton volverJugarButton;
-    private final JButton refrescarResultadosButton;
+    private final SkyButton seleccionarEquipoButton;
+    private final SkyButton iniciarTorneoButton;
+    private final SkyButton simularSiguienteButton;
+    private final SkyButton confirmarCambioButton;
+    private final SkyButton aplicarTacticaButton;
+    private final SkyButton simularSegundoTiempoButton;
+    private final SkyButton verFixtureButton;
+    private final SkyButton volverJugarButton;
+    private final SkyButton refrescarResultadosButton;
+    private final TabButton eventosTab;
+    private final TabButton plantelTab;
 
     private final JLabel equipoDtLabel;
     private final JLabel estadoLabel;
@@ -66,6 +93,8 @@ public class SkyFutFrame extends JFrame {
     private final JTextArea eventosArea;
     private final JTextArea resultadosArea;
     private final JTextArea plantelArea;
+    private final CardLayout contenidoTabsLayout;
+    private final JPanel contenidoTabs;
     private boolean torneoCompleto;
     private boolean campeonAvisado;
 
@@ -75,21 +104,25 @@ public class SkyFutFrame extends JFrame {
         this.saleCombo = new JComboBox<>();
         this.entraCombo = new JComboBox<>();
         this.tacticaCombo = new JComboBox<>();
-        this.seleccionarEquipoButton = new JButton("Elegir DT");
-        this.iniciarTorneoButton = new JButton("Iniciar torneo");
-        this.simularSiguienteButton = new JButton("Simular siguiente partido");
-        this.confirmarCambioButton = new JButton("Confirmar cambio");
-        this.aplicarTacticaButton = new JButton("Aplicar tactica");
-        this.simularSegundoTiempoButton = new JButton("Simular segundo tiempo");
-        this.verFixtureButton = new JButton("Ver fixture");
-        this.volverJugarButton = new JButton("Volver a jugar");
-        this.refrescarResultadosButton = new JButton("Refrescar resultados");
+        this.seleccionarEquipoButton = SkyButton.solid("Elegir DT", BLACK, WHITE);
+        this.iniciarTorneoButton = SkyButton.neutral("Iniciar torneo");
+        this.simularSiguienteButton = SkyButton.outline("Simular siguiente partido", CYAN, new Color(230, 251, 255));
+        this.confirmarCambioButton = SkyButton.solid("Confirmar cambio", RED, WHITE);
+        this.aplicarTacticaButton = SkyButton.outline("Aplicar tactica", PURPLE, WHITE);
+        this.simularSegundoTiempoButton = SkyButton.solid("Simular segundo tiempo", LIME, BLACK);
+        this.verFixtureButton = SkyButton.outline("Ver fixture", PURPLE, WHITE);
+        this.volverJugarButton = SkyButton.solid("Volver a jugar", BLACK, WHITE);
+        this.refrescarResultadosButton = SkyButton.solid("Refrescar resultados", BLACK, WHITE);
+        this.eventosTab = new TabButton("▣  Eventos", true);
+        this.plantelTab = new TabButton("♧  Plantel DT", false);
         this.equipoDtLabel = new JLabel("DT sin equipo");
         this.estadoLabel = new JLabel("Elegir un equipo para comenzar");
         this.partidoLabel = new JLabel("Sin partido actual");
         this.eventosArea = crearAreaTexto();
         this.resultadosArea = crearAreaTexto();
         this.plantelArea = crearAreaTexto();
+        this.contenidoTabsLayout = new CardLayout();
+        this.contenidoTabs = new JPanel(contenidoTabsLayout);
 
         configurarVentana();
         configurarRenderers();
@@ -102,11 +135,13 @@ public class SkyFutFrame extends JFrame {
     private void configurarVentana() {
         setTitle("SkyFut - Simulador de Torneo");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(1020, 680));
+        setMinimumSize(new Dimension(1100, 720));
+        setSize(1280, 760);
         setLocationRelativeTo(null);
 
-        JPanel root = new JPanel(new BorderLayout(12, 12));
-        root.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        BackgroundPanel root = new BackgroundPanel();
+        root.setLayout(new BorderLayout(0, 0));
+        root.setBorder(BorderFactory.createEmptyBorder(44, 10, 12, 10));
         setContentPane(root);
 
         root.add(crearPanelSuperior(), BorderLayout.NORTH);
@@ -114,19 +149,35 @@ public class SkyFutFrame extends JFrame {
     }
 
     private JPanel crearPanelSuperior() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Torneo"));
+        RoundedPanel panel = new RoundedPanel(36, true, false);
+        panel.setLayout(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 22, 18, 22));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.insets = new Insets(6, 8, 6, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        JLabel titulo = titulo("TORNEO");
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 1;
         gbc.weightx = 0;
-        panel.add(new JLabel("Equipo del DT:"), gbc);
+        panel.add(titulo, gbc);
+
+        gbc.gridx = 5;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.EAST;
+        panel.add(new TrophyBadge(), gbc);
+
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0;
+        panel.add(label("Equipo del DT:"), gbc);
 
         gbc.gridx = 1;
-        gbc.weightx = 1;
+        gbc.weightx = 1.0;
+        equipoCombo.setPreferredSize(new Dimension(260, 40));
         panel.add(equipoCombo, gbc);
 
         gbc.gridx = 2;
@@ -137,99 +188,188 @@ public class SkyFutFrame extends JFrame {
         panel.add(iniciarTorneoButton, gbc);
 
         gbc.gridx = 4;
+        simularSiguienteButton.setPreferredSize(new Dimension(220, 40));
         panel.add(simularSiguienteButton, gbc);
 
         gbc.gridx = 5;
+        verFixtureButton.setPreferredSize(new Dimension(130, 40));
         panel.add(verFixtureButton, gbc);
 
         gbc.gridx = 6;
+        volverJugarButton.setPreferredSize(new Dimension(130, 40));
         panel.add(volverJugarButton, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Seleccionado:"), gbc);
+        gbc.gridy = 2;
+        panel.add(label("Seleccionado:"), gbc);
 
         gbc.gridx = 1;
         gbc.gridwidth = 2;
+        equipoDtLabel.setFont(BODY_FONT);
         panel.add(equipoDtLabel, gbc);
 
         gbc.gridx = 3;
         gbc.gridwidth = 4;
+        estadoLabel.setFont(BODY_FONT);
         estadoLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         panel.add(estadoLabel, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.gridwidth = 7;
-        partidoLabel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
+        partidoLabel.setFont(BODY_FONT);
+        partidoLabel.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
         panel.add(partidoLabel, gbc);
 
         return panel;
     }
 
-    private JSplitPane crearPanelCentral() {
-        JPanel izquierda = new JPanel(new BorderLayout(8, 8));
+    private JPanel crearPanelCentral() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1;
+
+        JPanel izquierda = new JPanel(new BorderLayout(0, 12));
+        izquierda.setOpaque(false);
         izquierda.add(crearPanelEntretiempo(), BorderLayout.NORTH);
+        izquierda.add(crearPanelTabs(), BorderLayout.CENTER);
 
-        JTabbedPane tabsIzquierda = new JTabbedPane();
-        tabsIzquierda.addTab("Eventos", new JScrollPane(eventosArea));
-        tabsIzquierda.addTab("Plantel DT", new JScrollPane(plantelArea));
-        izquierda.add(tabsIzquierda, BorderLayout.CENTER);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0.72;
+        panel.add(izquierda, gbc);
 
-        JPanel derecha = new JPanel(new BorderLayout(8, 8));
-        derecha.setBorder(BorderFactory.createTitledBorder("Resumen"));
-        derecha.add(new JScrollPane(resultadosArea), BorderLayout.CENTER);
-        derecha.add(refrescarResultadosButton, BorderLayout.SOUTH);
+        gbc.gridx = 1;
+        gbc.weightx = 0.28;
+        gbc.insets = new Insets(0, 14, 0, 0);
+        panel.add(crearPanelResumen(), gbc);
 
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, izquierda, derecha);
-        split.setResizeWeight(0.58);
-        return split;
+        return panel;
     }
 
     private JPanel crearPanelEntretiempo() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Entretiempo"));
+        RoundedPanel panel = new RoundedPanel(18, true, true);
+        panel.setLayout(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 24, 16, 18));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.insets = new Insets(6, 8, 6, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        panel.add(new JLabel("Sale:"), gbc);
+        panel.add(titulo("ENTRETIEMPO"), gbc);
+
+        gbc.gridx = 4;
+        gbc.anchor = GridBagConstraints.EAST;
+        panel.add(new SpeedMarks(PURPLE), gbc);
+        gbc.anchor = GridBagConstraints.CENTER;
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(label("Sale:"), gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 1;
+        saleCombo.setPreferredSize(new Dimension(230, 40));
         panel.add(saleCombo, gbc);
 
         gbc.gridx = 2;
         gbc.weightx = 0;
-        panel.add(new JLabel("Entra:"), gbc);
+        panel.add(label("Entra:"), gbc);
 
         gbc.gridx = 3;
         gbc.weightx = 1;
+        entraCombo.setPreferredSize(new Dimension(250, 40));
         panel.add(entraCombo, gbc);
 
         gbc.gridx = 4;
         gbc.weightx = 0;
+        confirmarCambioButton.setPreferredSize(new Dimension(205, 40));
         panel.add(confirmarCambioButton, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Tactica:"), gbc);
+        gbc.gridy = 2;
+        panel.add(label("Tactica:"), gbc);
 
         gbc.gridx = 1;
         gbc.gridwidth = 2;
+        tacticaCombo.setPreferredSize(new Dimension(280, 40));
         panel.add(tacticaCombo, gbc);
 
         gbc.gridx = 3;
         gbc.gridwidth = 1;
+        aplicarTacticaButton.setPreferredSize(new Dimension(220, 40));
         panel.add(aplicarTacticaButton, gbc);
 
         gbc.gridx = 4;
+        simularSegundoTiempoButton.setPreferredSize(new Dimension(205, 40));
         panel.add(simularSegundoTiempoButton, gbc);
 
         return panel;
+    }
+
+    private JPanel crearPanelTabs() {
+        JPanel panel = new JPanel(new BorderLayout(0, 0));
+        panel.setOpaque(false);
+
+        JPanel tabs = new JPanel(new BorderLayout(0, 0));
+        tabs.setOpaque(false);
+        JPanel tabsRow = new JPanel();
+        tabsRow.setOpaque(false);
+        tabsRow.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        tabsRow.add(eventosTab);
+        tabsRow.add(plantelTab);
+        tabs.add(tabsRow, BorderLayout.WEST);
+
+        contenidoTabs.setOpaque(false);
+        contenidoTabs.add(crearContenidoDecorado(eventosArea, true), "EVENTOS");
+        contenidoTabs.add(crearContenidoDecorado(plantelArea, true), "PLANTEL");
+
+        panel.add(tabs, BorderLayout.NORTH);
+        panel.add(contenidoTabs, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel crearPanelResumen() {
+        RoundedPanel panel = new RoundedPanel(18, true, false);
+        panel.setLayout(new BorderLayout(0, 12));
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 14, 8, 14));
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(titulo("RESUMEN"), BorderLayout.WEST);
+        header.add(new SpeedMarks(LIME), BorderLayout.EAST);
+        panel.add(header, BorderLayout.NORTH);
+
+        DecoratedContent content = new DecoratedContent(false);
+        content.setLayout(new BorderLayout());
+        content.add(crearScrollTransparente(resultadosArea), BorderLayout.CENTER);
+        panel.add(content, BorderLayout.CENTER);
+
+        refrescarResultadosButton.setPreferredSize(new Dimension(220, 50));
+        refrescarResultadosButton.setText("⟳  Refrescar resultados");
+        panel.add(refrescarResultadosButton, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private JPanel crearContenidoDecorado(JTextArea area, boolean leftDecoration) {
+        DecoratedContent panel = new DecoratedContent(leftDecoration);
+        panel.setLayout(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        panel.add(crearScrollTransparente(area), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JScrollPane crearScrollTransparente(JTextArea area) {
+        JScrollPane scroll = new JScrollPane(area);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        return scroll;
     }
 
     private JTextArea crearAreaTexto() {
@@ -237,19 +377,43 @@ public class SkyFutFrame extends JFrame {
         area.setEditable(false);
         area.setLineWrap(true);
         area.setWrapStyleWord(true);
+        area.setOpaque(false);
+        area.setFont(new Font("Consolas", Font.PLAIN, 14));
+        area.setForeground(INK);
+        area.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         return area;
     }
 
+    private JLabel titulo(String texto) {
+        JLabel label = new JLabel(texto);
+        label.setFont(TITLE_FONT);
+        label.setForeground(BLACK);
+        return label;
+    }
+
+    private JLabel label(String texto) {
+        JLabel label = new JLabel(texto);
+        label.setFont(LABEL_FONT);
+        label.setForeground(INK);
+        return label;
+    }
+
     private void configurarRenderers() {
+        estilizarCombo(equipoCombo);
+        estilizarCombo(saleCombo);
+        estilizarCombo(entraCombo);
+        estilizarCombo(tacticaCombo);
+
         equipoCombo.setRenderer(new DefaultListCellRenderer() {
             @Override
-            public java.awt.Component getListCellRendererComponent(
-                    javax.swing.JList<?> list,
+            public Component getListCellRendererComponent(
+                    JList<?> list,
                     Object value,
                     int index,
                     boolean isSelected,
                     boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setFont(BODY_FONT);
                 if (value instanceof Equipo equipo) {
                     setText(equipo.getNombre());
                 }
@@ -259,13 +423,14 @@ public class SkyFutFrame extends JFrame {
 
         DefaultListCellRenderer jugadorRenderer = new DefaultListCellRenderer() {
             @Override
-            public java.awt.Component getListCellRendererComponent(
-                    javax.swing.JList<?> list,
+            public Component getListCellRendererComponent(
+                    JList<?> list,
                     Object value,
                     int index,
                     boolean isSelected,
                     boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setFont(BODY_FONT);
                 if (value instanceof IJugador jugador) {
                     setText(jugador.getNombre() + " - " + jugador.getPosicion()
                             + " (" + String.format("%.2f", jugador.getRendimiento()) + ")");
@@ -275,6 +440,24 @@ public class SkyFutFrame extends JFrame {
         };
         saleCombo.setRenderer(jugadorRenderer);
         entraCombo.setRenderer(jugadorRenderer);
+    }
+
+    private void estilizarCombo(JComboBox<?> combo) {
+        combo.setFont(BODY_FONT);
+        combo.setBackground(WHITE);
+        combo.setForeground(INK);
+        combo.setBorder(BorderFactory.createLineBorder(new Color(204, 204, 204), 1, true));
+        combo.setUI(new BasicComboBoxUI() {
+            @Override
+            protected JButton createArrowButton() {
+                JButton button = new JButton("⌄");
+                button.setBorder(BorderFactory.createEmptyBorder());
+                button.setBackground(WHITE);
+                button.setForeground(BLACK);
+                button.setFont(new Font("Arial", Font.BOLD, 18));
+                return button;
+            }
+        });
     }
 
     private void configurarAcciones() {
@@ -287,6 +470,15 @@ public class SkyFutFrame extends JFrame {
         verFixtureButton.addActionListener(e -> ejecutarSeguro(this::mostrarFixture));
         volverJugarButton.addActionListener(e -> ejecutarSeguro(this::volverAJugar));
         refrescarResultadosButton.addActionListener(e -> ejecutarSeguro(this::actualizarResultados));
+        eventosTab.addActionListener(e -> seleccionarTab("EVENTOS"));
+        plantelTab.addActionListener(e -> seleccionarTab("PLANTEL"));
+    }
+
+    private void seleccionarTab(String tab) {
+        boolean eventos = "EVENTOS".equals(tab);
+        eventosTab.setSelectedTab(eventos);
+        plantelTab.setSelectedTab(!eventos);
+        contenidoTabsLayout.show(contenidoTabs, tab);
     }
 
     private void cargarEquipos() {
@@ -682,5 +874,284 @@ public class SkyFutFrame extends JFrame {
         public String toString() {
             return nombre + " (" + tactica.getFormacion() + ")";
         }
+    }
+
+    private static class BackgroundPanel extends JPanel {
+        BackgroundPanel() {
+            setBackground(BLACK);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = smooth(g);
+            int w = getWidth();
+            int h = getHeight();
+            g2.setColor(BLACK);
+            g2.fillRect(0, 0, w, h);
+            g2.setPaint(new GradientPaint(w - 500, 0, new Color(105, 0, 255), w - 120, 0, new Color(117, 0, 220)));
+            g2.fillOval(w - 520, -210, 520, 500);
+            g2.fillRect(w - 310, 0, 260, 48);
+
+            int[] colors = {0x5A00E6, 0x006CFF, 0x00D5CA, 0xAEE800, 0xF40000};
+            int y = 44;
+            for (int color : colors) {
+                g2.setColor(new Color(color));
+                g2.fillRoundRect(-34, y, 86, 84, 26, 26);
+                y += 31;
+            }
+            g2.dispose();
+        }
+    }
+
+    private static class RoundedPanel extends JPanel {
+        private final int radius;
+        private final boolean shadow;
+        private final boolean topStripes;
+
+        RoundedPanel(int radius, boolean shadow, boolean topStripes) {
+            this.radius = radius;
+            this.shadow = shadow;
+            this.topStripes = topStripes;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = smooth(g);
+            int w = getWidth();
+            int h = getHeight();
+            if (shadow) {
+                g2.setColor(new Color(0, 0, 0, 36));
+                g2.fillRoundRect(2, 3, w - 4, h - 4, radius, radius);
+            }
+            g2.setColor(WHITE);
+            g2.fillRoundRect(0, 0, w - 4, h - 5, radius, radius);
+            g2.setColor(new Color(230, 230, 230));
+            g2.drawRoundRect(0, 0, w - 4, h - 5, radius, radius);
+            if (topStripes) {
+                g2.setColor(PURPLE);
+                for (int i = 0; i < 5; i++) {
+                    g2.fillPolygon(
+                            new int[] {w - 126 + i * 20, w - 110 + i * 20, w - 124 + i * 20, w - 140 + i * 20},
+                            new int[] {22, 22, 44, 44},
+                            4);
+                }
+            }
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    private static class DecoratedContent extends JPanel {
+        private final boolean leftDecoration;
+
+        DecoratedContent(boolean leftDecoration) {
+            this.leftDecoration = leftDecoration;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = smooth(g);
+            int w = getWidth();
+            int h = getHeight();
+            g2.setColor(WHITE);
+            g2.fillRoundRect(0, 0, w - 2, h - 2, 16, 16);
+            g2.setColor(new Color(224, 224, 224));
+            g2.drawRoundRect(0, 0, w - 2, h - 2, 16, 16);
+            if (leftDecoration) {
+                drawRainbowCorner(g2, -170, h - 128, false);
+            } else {
+                drawRainbowCorner(g2, w - 290, h - 245, true);
+            }
+            g2.dispose();
+            super.paintComponent(g);
+        }
+
+        private void drawRainbowCorner(Graphics2D g2, int x, int y, boolean soft) {
+            Color[] colors = soft
+                    ? new Color[] {new Color(169, 226, 240, 210), new Color(198, 175, 239, 180),
+                            new Color(255, 169, 178, 165), new Color(210, 246, 87, 150)}
+                    : new Color[] {LIME, RED, PURPLE, new Color(0, 207, 196)};
+            int[] sizes = soft ? new int[] {260, 205, 150, 92} : new int[] {330, 275, 220, 165};
+            for (int i = 0; i < colors.length; i++) {
+                g2.setColor(colors[i]);
+                g2.fillRoundRect(x + i * 35, y + i * 52, sizes[i], sizes[i], 78, 78);
+            }
+        }
+    }
+
+    private static class SkyButton extends JButton {
+        private final Color accent;
+        private final Color text;
+        private final boolean filled;
+        private final boolean neutral;
+        private boolean hover;
+
+        private SkyButton(String text, Color accent, Color textColor, boolean filled, boolean neutral) {
+            super(text);
+            this.accent = accent;
+            this.text = textColor;
+            this.filled = filled;
+            this.neutral = neutral;
+            setFont(BODY_FONT);
+            setBorder(BorderFactory.createEmptyBorder(8, 18, 8, 18));
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    hover = true;
+                    repaint();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    hover = false;
+                    repaint();
+                }
+            });
+        }
+
+        static SkyButton solid(String text, Color accent, Color textColor) {
+            return new SkyButton(text, accent, textColor, true, false);
+        }
+
+        static SkyButton outline(String text, Color accent, Color fill) {
+            return new SkyButton(text, accent, accent, false, false);
+        }
+
+        static SkyButton neutral(String text) {
+            return new SkyButton(text, new Color(215, 215, 215), new Color(120, 120, 120), true, true);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = smooth(g);
+            int w = getWidth();
+            int h = getHeight();
+            boolean enabled = isEnabled();
+            Color bg = filled ? accent : WHITE;
+            Color fg = filled ? text : accent;
+            if (neutral || !enabled) {
+                bg = new Color(230, 230, 230);
+                fg = new Color(135, 135, 135);
+            } else if (hover) {
+                bg = filled ? accent.brighter() : new Color(244, 249, 255);
+            }
+            g2.setColor(bg);
+            g2.fillRoundRect(0, 0, w - 1, h - 1, 8, 8);
+            g2.setColor(filled ? bg.darker() : accent);
+            g2.setStroke(new BasicStroke(1.5f));
+            g2.drawRoundRect(0, 0, w - 1, h - 1, 8, 8);
+            g2.setFont(getFont());
+            FontMetrics fm = g2.getFontMetrics();
+            g2.setColor(fg);
+            int x = (w - fm.stringWidth(getText())) / 2;
+            int y = (h - fm.getHeight()) / 2 + fm.getAscent();
+            g2.drawString(getText(), x, y);
+            g2.dispose();
+        }
+    }
+
+    private static class TabButton extends JButton {
+        private boolean selected;
+
+        TabButton(String text, boolean selected) {
+            super(text);
+            this.selected = selected;
+            setPreferredSize(new Dimension(150, 46));
+            setFont(BODY_FONT);
+            setBorder(BorderFactory.createEmptyBorder());
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+
+        void setSelectedTab(boolean selected) {
+            this.selected = selected;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = smooth(g);
+            int w = getWidth();
+            int h = getHeight();
+            g2.setColor(selected ? PURPLE : WHITE);
+            g2.fillRoundRect(0, 0, w, h + 18, 18, 18);
+            g2.setColor(selected ? PURPLE : new Color(224, 224, 224));
+            g2.drawRoundRect(0, 0, w - 1, h + 18, 18, 18);
+            g2.setFont(getFont());
+            g2.setColor(selected ? WHITE : BLACK);
+            FontMetrics fm = g2.getFontMetrics();
+            int x = (w - fm.stringWidth(getText())) / 2;
+            int y = (h - fm.getHeight()) / 2 + fm.getAscent();
+            g2.drawString(getText(), x, y);
+            g2.dispose();
+        }
+    }
+
+    private static class SpeedMarks extends JComponent {
+        private final Color color;
+
+        SpeedMarks(Color color) {
+            this.color = color;
+            setPreferredSize(new Dimension(96, 28));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = smooth(g);
+            g2.setColor(color);
+            for (int i = 0; i < 5; i++) {
+                int x = i * 18;
+                g2.fillPolygon(new int[] {x + 18, x + 30, x + 18, x + 6}, new int[] {2, 2, 24, 24}, 4);
+            }
+            g2.dispose();
+        }
+    }
+
+    private static class TrophyBadge extends JComponent {
+        TrophyBadge() {
+            setPreferredSize(new Dimension(92, 118));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = smooth(g);
+            int w = getWidth();
+            int h = getHeight();
+            g2.setColor(BLACK);
+            g2.fillRoundRect(2, 18, w - 4, h - 20, 30, 30);
+            g2.setColor(WHITE);
+            g2.fillRoundRect(18, 0, w - 36, 32, 20, 20);
+            g2.fillRoundRect(18, 46, w - 36, 32, 20, 20);
+            g2.fillRoundRect(18, 86, w - 36, 32, 20, 20);
+            g2.setPaint(new GradientPaint(34, 20, new Color(255, 223, 83), 60, 86, new Color(188, 120, 12)));
+            g2.fillOval(34, 18, 28, 60);
+            g2.fillRect(43, 68, 10, 25);
+            g2.setColor(new Color(32, 145, 76));
+            g2.fillRect(35, 91, 28, 5);
+            g2.setColor(BLACK);
+            g2.setFont(new Font("Arial Black", Font.BOLD, 13));
+            drawCentered(g2, "FIFA", 0, 112, w);
+            g2.dispose();
+        }
+    }
+
+    private static Graphics2D smooth(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        return g2;
+    }
+
+    private static void drawCentered(Graphics2D g2, String text, int x, int y, int width) {
+        FontMetrics metrics = g2.getFontMetrics();
+        int textX = x + (width - metrics.stringWidth(text)) / 2;
+        g2.drawString(text, textX, y);
     }
 }
