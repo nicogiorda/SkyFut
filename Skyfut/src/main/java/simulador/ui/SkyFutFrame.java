@@ -120,8 +120,8 @@ public class SkyFutFrame extends JFrame {
         this.verFixtureButton = SkyButton.solid("Ver fixture", NAVY, WHITE);
         this.volverJugarButton = SkyButton.solid("Volver a jugar", MAROON, WHITE);
         this.refrescarResultadosButton = SkyButton.solid("Refrescar resultados", BLACK, WHITE);
-        this.eventosTab = new TabButton("▣  Eventos", true);
-        this.plantelTab = new TabButton("♧  Plantel DT", false);
+        this.eventosTab = new TabButton("Eventos", true);
+        this.plantelTab = new TabButton("Plantel DT", false);
         this.equipoDtLabel = new JLabel("DT sin equipo");
         this.estadoLabel = new JLabel("Elegir un equipo para comenzar");
         this.partidoLabel = new JLabel("Sin partido actual");
@@ -252,7 +252,7 @@ public class SkyFutFrame extends JFrame {
     }
 
     private JPanel crearPanelEntretiempo() {
-        RoundedPanel panel = new RoundedPanel(18, true, true);
+        RoundedPanel panel = new RoundedPanel(18, true, false);
         panel.setLayout(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(18, 24, 16, 18));
         GridBagConstraints gbc = new GridBagConstraints();
@@ -352,7 +352,7 @@ public class SkyFutFrame extends JFrame {
         panel.add(content, BorderLayout.CENTER);
 
         refrescarResultadosButton.setPreferredSize(new Dimension(220, 50));
-        refrescarResultadosButton.setText("⟳  Refrescar resultados");
+        refrescarResultadosButton.setText("Refrescar resultados");
         panel.add(refrescarResultadosButton, BorderLayout.SOUTH);
         return panel;
     }
@@ -451,7 +451,7 @@ public class SkyFutFrame extends JFrame {
         combo.setUI(new BasicComboBoxUI() {
             @Override
             protected JButton createArrowButton() {
-                JButton button = new JButton("⌄");
+                JButton button = new JButton("v");
                 button.setBorder(BorderFactory.createEmptyBorder());
                 button.setBackground(WHITE);
                 button.setForeground(BLACK);
