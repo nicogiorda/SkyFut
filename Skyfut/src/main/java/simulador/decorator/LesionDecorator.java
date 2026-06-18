@@ -11,4 +11,14 @@ public class LesionDecorator extends JugadorDecorator {
     public double getRendimiento() {
         return jugador.getRendimiento() * 0.3;
     }
+
+    @Override
+    public String getNombreDecorador() {
+        return "Lesion";
+    }
+
+    @Override
+    public String getImpactoDecorador() {
+        return "x0.30";
+    }
 }

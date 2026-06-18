@@ -135,6 +135,13 @@ public class TorneoFacade {
         return partidoActual != null && partidoActual.getEstado().permiteCambios();
     }
 
+    public void reiniciarParaNuevoTorneo() {
+        idTorneo = -1;
+        nombreTorneoActual = NOMBRE_TORNEO_BASE;
+        equipoDt = null;
+        partidoActual = null;
+    }
+
     private void validarTorneoIniciado() {
         if (idTorneo < 0) {
             throw new IllegalStateException("El torneo no ha sido iniciado");

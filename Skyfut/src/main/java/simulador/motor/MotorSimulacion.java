@@ -3,6 +3,9 @@ package simulador.motor;
 import java.util.List;
 
 import simulador.composite.Partido;
+import simulador.decorator.CansancioDecorator;
+import simulador.domain.Equipo;
+import simulador.domain.IJugador;
 import simulador.dto.ContextoEvento;
 import simulador.events.CambioFactory;
 import simulador.events.EventoFactory;
@@ -12,6 +15,8 @@ import simulador.events.LesionFactory;
 import simulador.events.TarjetaFactory;
 
 public class MotorSimulacion {
+    private static final double MODIFICADOR_EQUIPO_DT = 1.12;
+
     private final List<EventoFactory> eventoFactories;
     private final CambioFactory cambioFactory;
 
@@ -34,23 +39,37 @@ public class MotorSimulacion {
     }
 
     public void simularPrimerTiempo(Partido partido) {
+        simularPrimerTiempo(partido, null);
+    }
+
+    public void simularPrimerTiempo(Partido partido, Equipo equipoFavorecido) {
         if (partido.getMinuto() == 0) {
             partido.iniciar();
         }
 
         while (!partido.getEstado().permiteCambios() && !partido.estaCompleto()) {
-            simularMinuto(partido);
+            simularMinuto(partido, equipoFavorecido);
+        }
+
+        if (partido.getEstado().permiteCambios()) {
+            aplicarCansancio(partido);
         }
     }
 
     public void simularSegundoTiempo(Partido partido) {
+        simularSegundoTiempo(partido, null);
+    }
+
+    public void simularSegundoTiempo(Partido partido, Equipo equipoFavorecido) {
         if (!partido.getEstado().permiteCambios()) {
             throw new IllegalStateException("El segundo tiempo solo puede iniciarse desde el entretiempo");
         }
 
         while (!partido.estaCompleto()) {
-            simularMinuto(partido);
+            simularMinuto(partido, equipoFavorecido);
         }
+
+        aplicarCansancio(partido);
     }
 
     public void simularCambiosAutomaticosEntretiempo(Partido partido) {
@@ -76,17 +95,24 @@ public class MotorSimulacion {
     }
 
     private void simularMinuto(Partido partido) {
+        simularMinuto(partido, null);
+    }
+
+    private void simularMinuto(Partido partido, Equipo equipoFavorecido) {
         partido.avanzarMinuto();
 
         if (!partido.getEstado().permiteEventosJuego()) {
             return;
         }
 
+        int idEquipoFavorecido = equipoFavorecido == null ? -1 : equipoFavorecido.getId();
         ContextoEvento contexto = new ContextoEvento(
                 partido.getMinuto(),
                 partido.getLocal(),
                 partido.getVisitante(),
-                partido.getMinuto() > 45);
+                partido.getMinuto() > 45,
+                idEquipoFavorecido,
+                MODIFICADOR_EQUIPO_DT);
 
         for (EventoFactory factory : eventoFactories) {
             factory.crearEvento(contexto).ifPresent(evento -> aplicarYRegistrar(partido, evento));
@@ -96,5 +122,16 @@ public class MotorSimulacion {
     private void aplicarYRegistrar(Partido partido, EventoPartido evento) {
         evento.aplicar(partido);
         partido.registrarEvento(evento);
+    }
+
+    private void aplicarCansancio(Partido partido) {
+        aplicarCansancio(partido.getLocal(), partido.getMinuto());
+        aplicarCansancio(partido.getVisitante(), partido.getMinuto());
+    }
+
+    private void aplicarCansancio(Equipo equipo, int minuto) {
+        for (IJugador jugador : List.copyOf(equipo.getTitulares())) {
+            equipo.decorarTitular(jugador, j -> new CansancioDecorator(j, minuto));
+        }
     }
 }
