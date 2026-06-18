@@ -3,6 +3,7 @@ package simulador.motor;
 import java.util.List;
 
 import simulador.composite.Partido;
+import simulador.domain.Equipo;
 import simulador.dto.ContextoEvento;
 import simulador.events.CambioFactory;
 import simulador.events.EventoFactory;
@@ -12,6 +13,8 @@ import simulador.events.LesionFactory;
 import simulador.events.TarjetaFactory;
 
 public class MotorSimulacion {
+    private static final double MODIFICADOR_EQUIPO_DT = 1.12;
+
     private final List<EventoFactory> eventoFactories;
     private final CambioFactory cambioFactory;
 
@@ -34,22 +37,30 @@ public class MotorSimulacion {
     }
 
     public void simularPrimerTiempo(Partido partido) {
+        simularPrimerTiempo(partido, null);
+    }
+
+    public void simularPrimerTiempo(Partido partido, Equipo equipoFavorecido) {
         if (partido.getMinuto() == 0) {
             partido.iniciar();
         }
 
         while (!partido.getEstado().permiteCambios() && !partido.estaCompleto()) {
-            simularMinuto(partido);
+            simularMinuto(partido, equipoFavorecido);
         }
     }
 
     public void simularSegundoTiempo(Partido partido) {
+        simularSegundoTiempo(partido, null);
+    }
+
+    public void simularSegundoTiempo(Partido partido, Equipo equipoFavorecido) {
         if (!partido.getEstado().permiteCambios()) {
             throw new IllegalStateException("El segundo tiempo solo puede iniciarse desde el entretiempo");
         }
 
         while (!partido.estaCompleto()) {
-            simularMinuto(partido);
+            simularMinuto(partido, equipoFavorecido);
         }
     }
 
@@ -76,17 +87,24 @@ public class MotorSimulacion {
     }
 
     private void simularMinuto(Partido partido) {
+        simularMinuto(partido, null);
+    }
+
+    private void simularMinuto(Partido partido, Equipo equipoFavorecido) {
         partido.avanzarMinuto();
 
         if (!partido.getEstado().permiteEventosJuego()) {
             return;
         }
 
+        int idEquipoFavorecido = equipoFavorecido == null ? -1 : equipoFavorecido.getId();
         ContextoEvento contexto = new ContextoEvento(
                 partido.getMinuto(),
                 partido.getLocal(),
                 partido.getVisitante(),
-                partido.getMinuto() > 45);
+                partido.getMinuto() > 45,
+                idEquipoFavorecido,
+                MODIFICADOR_EQUIPO_DT);
 
         for (EventoFactory factory : eventoFactories) {
             factory.crearEvento(contexto).ifPresent(evento -> aplicarYRegistrar(partido, evento));

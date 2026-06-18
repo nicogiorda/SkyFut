@@ -55,6 +55,7 @@ public class SkyFutFrame extends JFrame {
     private final JButton aplicarTacticaButton;
     private final JButton simularSegundoTiempoButton;
     private final JButton verFixtureButton;
+    private final JButton volverJugarButton;
     private final JButton refrescarResultadosButton;
 
     private final JLabel equipoDtLabel;
@@ -80,6 +81,7 @@ public class SkyFutFrame extends JFrame {
         this.aplicarTacticaButton = new JButton("Aplicar tactica");
         this.simularSegundoTiempoButton = new JButton("Simular segundo tiempo");
         this.verFixtureButton = new JButton("Ver fixture");
+        this.volverJugarButton = new JButton("Volver a jugar");
         this.refrescarResultadosButton = new JButton("Refrescar resultados");
         this.equipoDtLabel = new JLabel("DT sin equipo");
         this.estadoLabel = new JLabel("Elegir un equipo para comenzar");
@@ -139,6 +141,9 @@ public class SkyFutFrame extends JFrame {
         gbc.gridx = 5;
         panel.add(verFixtureButton, gbc);
 
+        gbc.gridx = 6;
+        panel.add(volverJugarButton, gbc);
+
         gbc.gridx = 0;
         gbc.gridy = 1;
         panel.add(new JLabel("Seleccionado:"), gbc);
@@ -148,13 +153,13 @@ public class SkyFutFrame extends JFrame {
         panel.add(equipoDtLabel, gbc);
 
         gbc.gridx = 3;
-        gbc.gridwidth = 3;
+        gbc.gridwidth = 4;
         estadoLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         panel.add(estadoLabel, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.gridwidth = 6;
+        gbc.gridwidth = 7;
         partidoLabel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
         panel.add(partidoLabel, gbc);
 
@@ -279,6 +284,7 @@ public class SkyFutFrame extends JFrame {
         aplicarTacticaButton.addActionListener(e -> ejecutarSeguro(this::aplicarTactica));
         simularSegundoTiempoButton.addActionListener(e -> ejecutarSeguro(this::simularSegundoTiempo));
         verFixtureButton.addActionListener(e -> ejecutarSeguro(this::mostrarFixture));
+        volverJugarButton.addActionListener(e -> ejecutarSeguro(this::volverAJugar));
         refrescarResultadosButton.addActionListener(e -> ejecutarSeguro(this::actualizarResultados));
     }
 
@@ -372,6 +378,10 @@ public class SkyFutFrame extends JFrame {
             estadoLabel.setText("Segundo tiempo simulado");
         }
         actualizarVistaPartido();
+        if (dtQuedoEliminado(partido)) {
+            mostrarInfo(mensajeEliminacion(partido));
+            facade.simularRestoTorneoAutomatico();
+        }
         actualizarResultados();
         actualizarEstadoControles();
     }
@@ -515,6 +525,7 @@ public class SkyFutFrame extends JFrame {
         iniciarTorneoButton.setEnabled(hayEquipoDt && !torneoIniciado);
         simularSiguienteButton.setEnabled(torneoIniciado && !entretiempoDt && !torneoCompleto);
         verFixtureButton.setEnabled(torneoIniciado);
+        volverJugarButton.setEnabled(torneoCompleto);
 
         saleCombo.setEnabled(entretiempoDt);
         entraCombo.setEnabled(entretiempoDt);
@@ -546,6 +557,45 @@ public class SkyFutFrame extends JFrame {
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
+    }
+
+    private boolean dtQuedoEliminado(Partido partido) {
+        Equipo equipoDt = facade.getEquipoDt();
+        return partido != null
+                && equipoDt != null
+                && (partido.getLocal().getId() == equipoDt.getId()
+                    || partido.getVisitante().getId() == equipoDt.getId())
+                && partido.getGanador() != null
+                && partido.getGanador().getId() != equipoDt.getId();
+    }
+
+    private String mensajeEliminacion(Partido partido) {
+        Equipo equipoDt = facade.getEquipoDt();
+        String rival = partido.getLocal().getId() == equipoDt.getId()
+                ? partido.getVisitante().getNombre()
+                : partido.getLocal().getNombre();
+        String ronda = facade.consultarFixture().stream()
+                .filter(p -> p.partidoId() == partido.getId())
+                .map(FixturePartido::faseNombre)
+                .findFirst()
+                .orElse("esta ronda");
+
+        return "Quedaste eliminado en " + ronda + " contra " + rival
+                + ". Ahora se simulara automaticamente el resto del torneo!";
+    }
+
+    private void volverAJugar() {
+        facade.reiniciarParaNuevoTorneo();
+        torneoCompleto = false;
+        campeonAvisado = false;
+        equipoDtLabel.setText("DT sin equipo");
+        estadoLabel.setText("Elegir un equipo para comenzar");
+        partidoLabel.setText("Sin partido actual");
+        eventosArea.setText("");
+        resultadosArea.setText("Inicia el torneo para ver resultados.\n");
+        plantelArea.setText("Todavia no hay equipo del DT.\n");
+        cargarEquipos();
+        actualizarEstadoControles();
     }
 
     private void avisarCampeonSiCorresponde() {

@@ -37,7 +37,7 @@ public class GestorPartido {
 
     public void simularSiguientePartido(int idTorneo, Equipo equipoDt, Partido partido) {
         if (partidoEsDelDT(partido, equipoDt)) {
-            motor.simularPrimerTiempo(partido);
+            motor.simularPrimerTiempo(partido, equipoDt);
             return;
         }
 
@@ -51,8 +51,8 @@ public class GestorPartido {
 
     public void simularSegundoTiempo(int idTorneo, Partido partido, Equipo equipoDt) {
         simularCambiosAutomaticosRivalesEntretiempo(partido, equipoDt);
-        motor.simularSegundoTiempo(partido);
-        cerrarPartido(idTorneo, partido, equipoDt, true);
+        motor.simularSegundoTiempo(partido, equipoDt);
+        cerrarPartido(idTorneo, partido, equipoDt, false);
     }
 
     public void simularRestoTorneoAutomatico(int idTorneo, Equipo equipoDt) {
