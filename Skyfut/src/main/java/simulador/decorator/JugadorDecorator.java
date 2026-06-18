@@ -26,4 +26,12 @@ public abstract class JugadorDecorator implements IJugador {
     public double getRendimiento() {
         return jugador.getRendimiento();
     }
+
+    public IJugador getJugadorDecorado() {
+        return jugador;
+    }
+
+    public abstract String getNombreDecorador();
+
+    public abstract String getImpactoDecorador();
 }

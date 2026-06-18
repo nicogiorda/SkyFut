@@ -11,4 +11,14 @@ public class TarjetaAmarillaDecorator extends JugadorDecorator {
     public double getRendimiento() {
         return Math.max(0.0, jugador.getRendimiento() - 0.1);
     }
+
+    @Override
+    public String getNombreDecorador() {
+        return "Amarilla";
+    }
+
+    @Override
+    public String getImpactoDecorador() {
+        return "-0.10";
+    }
 }

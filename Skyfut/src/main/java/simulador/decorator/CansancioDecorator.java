@@ -12,7 +12,20 @@ public class CansancioDecorator extends JugadorDecorator {
 
     @Override
     public double getRendimiento() {
-        double modificador = Math.max(0.5, 1.0 - (minutoJugado / 300.0));
-        return jugador.getRendimiento() * modificador;
+        return jugador.getRendimiento() * getModificador();
+    }
+
+    @Override
+    public String getNombreDecorador() {
+        return "Cansancio";
+    }
+
+    @Override
+    public String getImpactoDecorador() {
+        return "x" + String.format("%.2f", getModificador());
+    }
+
+    private double getModificador() {
+        return Math.max(0.5, 1.0 - (minutoJugado / 300.0));
     }
 }

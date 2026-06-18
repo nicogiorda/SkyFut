@@ -28,6 +28,7 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import simulador.composite.Partido;
+import simulador.decorator.JugadorDecorator;
 import simulador.domain.Equipo;
 import simulador.domain.IJugador;
 import simulador.dto.FixturePartido;
@@ -645,7 +646,18 @@ public class SkyFutFrame extends JFrame {
 
     private String formatearJugador(IJugador jugador) {
         return jugador.getNombre() + " - " + jugador.getPosicion()
-                + " | rendimiento " + String.format("%.2f", jugador.getRendimiento());
+                + " | rendimiento " + String.format("%.2f", jugador.getRendimiento())
+                + " | " + describirDecoradores(jugador);
+    }
+
+    private String describirDecoradores(IJugador jugador) {
+        List<String> decoradores = new ArrayList<>();
+        IJugador actual = jugador;
+        while (actual instanceof JugadorDecorator decorator) {
+            decoradores.add(decorator.getNombreDecorador() + " (" + decorator.getImpactoDecorador() + ")");
+            actual = decorator.getJugadorDecorado();
+        }
+        return decoradores.isEmpty() ? "Normal" : String.join(", ", decoradores);
     }
 
     private void ejecutarSeguro(Runnable accion) {

@@ -3,7 +3,9 @@ package simulador.motor;
 import java.util.List;
 
 import simulador.composite.Partido;
+import simulador.decorator.CansancioDecorator;
 import simulador.domain.Equipo;
+import simulador.domain.IJugador;
 import simulador.dto.ContextoEvento;
 import simulador.events.CambioFactory;
 import simulador.events.EventoFactory;
@@ -48,6 +50,10 @@ public class MotorSimulacion {
         while (!partido.getEstado().permiteCambios() && !partido.estaCompleto()) {
             simularMinuto(partido, equipoFavorecido);
         }
+
+        if (partido.getEstado().permiteCambios()) {
+            aplicarCansancio(partido);
+        }
     }
 
     public void simularSegundoTiempo(Partido partido) {
@@ -62,6 +68,8 @@ public class MotorSimulacion {
         while (!partido.estaCompleto()) {
             simularMinuto(partido, equipoFavorecido);
         }
+
+        aplicarCansancio(partido);
     }
 
     public void simularCambiosAutomaticosEntretiempo(Partido partido) {
@@ -114,5 +122,16 @@ public class MotorSimulacion {
     private void aplicarYRegistrar(Partido partido, EventoPartido evento) {
         evento.aplicar(partido);
         partido.registrarEvento(evento);
+    }
+
+    private void aplicarCansancio(Partido partido) {
+        aplicarCansancio(partido.getLocal(), partido.getMinuto());
+        aplicarCansancio(partido.getVisitante(), partido.getMinuto());
+    }
+
+    private void aplicarCansancio(Equipo equipo, int minuto) {
+        for (IJugador jugador : List.copyOf(equipo.getTitulares())) {
+            equipo.decorarTitular(jugador, j -> new CansancioDecorator(j, minuto));
+        }
     }
 }
