@@ -6,7 +6,9 @@ import simulador.composite.Partido;
 import simulador.domain.Equipo;
 import simulador.domain.EstadisticasJugador;
 import simulador.domain.IJugador;
-import simulador.events.Cambio;
+import simulador.dto.ContextoEvento;
+import simulador.events.CambioFactory;
+import simulador.events.EventoPartido;
 import simulador.motor.MotorSimulacion;
 import simulador.repositorio.RepositorioPartido;
 import simulador.strategy.TacticaStrategy;
@@ -69,7 +71,15 @@ public class GestorPartido {
             throw new IllegalStateException("Los cambios solo estan permitidos durante el entretiempo");
         }
 
-        Cambio cambio = new Cambio(partido.getMinuto(), sale, entra, equipo);
+        ContextoEvento contexto = new ContextoEvento(
+                partido.getMinuto(),
+                partido.getLocal(),
+                partido.getVisitante(),
+                partido.getMinuto() > 45);
+
+        EventoPartido cambio = new CambioFactory(sale, entra, equipo)
+                .crearEvento(contexto)
+                .orElseThrow(() -> new IllegalStateException("No se pudo crear el evento de cambio"));
         cambio.aplicar(partido);
         partido.registrarEvento(cambio);
     }
