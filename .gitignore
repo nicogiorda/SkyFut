@@ -11,3 +11,4 @@ target/
 
 # SQLite backups
 *.db.bak-*
+Skyfut/db/torneo.db
