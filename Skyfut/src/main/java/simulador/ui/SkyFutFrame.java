@@ -59,10 +59,17 @@ public class SkyFutFrame extends JFrame {
     private static final Color BLACK = Color.BLACK;
     private static final Color INK = new Color(8, 8, 10);
     private static final Color WHITE = new Color(252, 252, 250);
-    private static final Color PURPLE = new Color(82, 0, 220);
-    private static final Color CYAN = new Color(0, 207, 221);
+    private static final Color MAROON = new Color(127, 16, 16);
+    private static final Color PURPLE = new Color(106, 0, 230);
+    private static final Color NAVY = new Color(34, 41, 128);
+    private static final Color FOREST = new Color(0, 85, 68);
+    private static final Color RED = new Color(229, 0, 0);
+    private static final Color BLUE = new Color(50, 79, 245);
+    private static final Color SKY = new Color(46, 152, 220);
+    private static final Color GREEN = new Color(0, 198, 83);
+    private static final Color MINT = new Color(91, 238, 203);
     private static final Color LIME = new Color(174, 232, 0);
-    private static final Color RED = new Color(242, 5, 5);
+    private static final Color PINK = new Color(230, 27, 101);
     private static final Font TITLE_FONT = new Font("Arial Black", Font.BOLD, 24);
     private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 16);
     private static final Font BODY_FONT = new Font("Arial", Font.BOLD, 15);
@@ -104,14 +111,14 @@ public class SkyFutFrame extends JFrame {
         this.saleCombo = new JComboBox<>();
         this.entraCombo = new JComboBox<>();
         this.tacticaCombo = new JComboBox<>();
-        this.seleccionarEquipoButton = SkyButton.solid("Elegir DT", BLACK, WHITE);
+        this.seleccionarEquipoButton = SkyButton.solid("Elegir DT", PURPLE, WHITE);
         this.iniciarTorneoButton = SkyButton.neutral("Iniciar torneo");
-        this.simularSiguienteButton = SkyButton.outline("Simular siguiente partido", CYAN, new Color(230, 251, 255));
+        this.simularSiguienteButton = SkyButton.solid("Simular siguiente partido", BLUE, WHITE);
         this.confirmarCambioButton = SkyButton.solid("Confirmar cambio", RED, WHITE);
-        this.aplicarTacticaButton = SkyButton.outline("Aplicar tactica", PURPLE, WHITE);
+        this.aplicarTacticaButton = SkyButton.solid("Aplicar tactica", FOREST, WHITE);
         this.simularSegundoTiempoButton = SkyButton.solid("Simular segundo tiempo", LIME, BLACK);
-        this.verFixtureButton = SkyButton.outline("Ver fixture", PURPLE, WHITE);
-        this.volverJugarButton = SkyButton.solid("Volver a jugar", BLACK, WHITE);
+        this.verFixtureButton = SkyButton.solid("Ver fixture", NAVY, WHITE);
+        this.volverJugarButton = SkyButton.solid("Volver a jugar", MAROON, WHITE);
         this.refrescarResultadosButton = SkyButton.solid("Refrescar resultados", BLACK, WHITE);
         this.eventosTab = new TabButton("▣  Eventos", true);
         this.plantelTab = new TabButton("♧  Plantel DT", false);
@@ -163,12 +170,6 @@ public class SkyFutFrame extends JFrame {
         gbc.weightx = 0;
         panel.add(titulo, gbc);
 
-        gbc.gridx = 5;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.EAST;
-        panel.add(new TrophyBadge(), gbc);
-
-        gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -893,7 +894,7 @@ public class SkyFutFrame extends JFrame {
             g2.fillOval(w - 520, -210, 520, 500);
             g2.fillRect(w - 310, 0, 260, 48);
 
-            int[] colors = {0x5A00E6, 0x006CFF, 0x00D5CA, 0xAEE800, 0xF40000};
+            int[] colors = {0x6A00E6, 0x324FF5, 0x5BEECC, 0xAEE800, 0xE50000};
             int y = 44;
             for (int color : colors) {
                 g2.setColor(new Color(color));
@@ -962,8 +963,6 @@ public class SkyFutFrame extends JFrame {
             g2.drawRoundRect(0, 0, w - 2, h - 2, 16, 16);
             if (leftDecoration) {
                 drawRainbowCorner(g2, -170, h - 128, false);
-            } else {
-                drawRainbowCorner(g2, w - 290, h - 245, true);
             }
             g2.dispose();
             super.paintComponent(g);
@@ -1036,14 +1035,14 @@ public class SkyFutFrame extends JFrame {
             Color bg = filled ? accent : WHITE;
             Color fg = filled ? text : accent;
             if (neutral || !enabled) {
-                bg = new Color(230, 230, 230);
-                fg = new Color(135, 135, 135);
+                bg = enabled ? new Color(232, 232, 232) : new Color(238, 238, 238);
+                fg = enabled ? new Color(118, 118, 118) : new Color(156, 156, 156);
             } else if (hover) {
-                bg = filled ? accent.brighter() : new Color(244, 249, 255);
+                bg = filled ? mix(accent, WHITE, 0.12) : mix(accent, WHITE, 0.92);
             }
             g2.setColor(bg);
             g2.fillRoundRect(0, 0, w - 1, h - 1, 8, 8);
-            g2.setColor(filled ? bg.darker() : accent);
+            g2.setColor(enabled && !neutral ? mix(accent, BLACK, 0.18) : new Color(205, 205, 205));
             g2.setStroke(new BasicStroke(1.5f));
             g2.drawRoundRect(0, 0, w - 1, h - 1, 8, 8);
             g2.setFont(getFont());
@@ -1053,6 +1052,14 @@ public class SkyFutFrame extends JFrame {
             int y = (h - fm.getHeight()) / 2 + fm.getAscent();
             g2.drawString(getText(), x, y);
             g2.dispose();
+        }
+
+        private static Color mix(Color color, Color target, double amount) {
+            double keep = 1.0 - amount;
+            int r = (int) Math.round(color.getRed() * keep + target.getRed() * amount);
+            int g = (int) Math.round(color.getGreen() * keep + target.getGreen() * amount);
+            int b = (int) Math.round(color.getBlue() * keep + target.getBlue() * amount);
+            return new Color(r, g, b);
         }
     }
 
@@ -1110,34 +1117,6 @@ public class SkyFutFrame extends JFrame {
                 int x = i * 18;
                 g2.fillPolygon(new int[] {x + 18, x + 30, x + 18, x + 6}, new int[] {2, 2, 24, 24}, 4);
             }
-            g2.dispose();
-        }
-    }
-
-    private static class TrophyBadge extends JComponent {
-        TrophyBadge() {
-            setPreferredSize(new Dimension(92, 118));
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = smooth(g);
-            int w = getWidth();
-            int h = getHeight();
-            g2.setColor(BLACK);
-            g2.fillRoundRect(2, 18, w - 4, h - 20, 30, 30);
-            g2.setColor(WHITE);
-            g2.fillRoundRect(18, 0, w - 36, 32, 20, 20);
-            g2.fillRoundRect(18, 46, w - 36, 32, 20, 20);
-            g2.fillRoundRect(18, 86, w - 36, 32, 20, 20);
-            g2.setPaint(new GradientPaint(34, 20, new Color(255, 223, 83), 60, 86, new Color(188, 120, 12)));
-            g2.fillOval(34, 18, 28, 60);
-            g2.fillRect(43, 68, 10, 25);
-            g2.setColor(new Color(32, 145, 76));
-            g2.fillRect(35, 91, 28, 5);
-            g2.setColor(BLACK);
-            g2.setFont(new Font("Arial Black", Font.BOLD, 13));
-            drawCentered(g2, "FIFA", 0, 112, w);
             g2.dispose();
         }
     }
