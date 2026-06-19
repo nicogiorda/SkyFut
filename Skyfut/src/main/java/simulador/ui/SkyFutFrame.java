@@ -118,7 +118,7 @@ public class SkyFutFrame extends JFrame {
         this.entraCombo = new JComboBox<>();
         this.tacticaCombo = new JComboBox<>();
         this.seleccionarEquipoButton = SkyButton.solid("Elegir DT", PURPLE, WHITE);
-        this.iniciarTorneoButton = SkyButton.neutral("Iniciar torneo");
+        this.iniciarTorneoButton = SkyButton.solid("Iniciar torneo", GREEN, BLACK);
         this.simularSiguienteButton = SkyButton.solid("Simular siguiente partido", BLUE, WHITE);
         this.confirmarCambioButton = SkyButton.solid("Confirmar cambio", RED, WHITE);
         this.aplicarTacticaButton = SkyButton.solid("Aplicar tactica", FOREST, WHITE);
