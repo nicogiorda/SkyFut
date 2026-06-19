@@ -38,7 +38,30 @@ public class CalculadorEstadisticas {
             }
         }
 
+        actualizarRendimientosFinales(statsMap, partido.getLocal());
+        actualizarRendimientosFinales(statsMap, partido.getVisitante());
+
         return new ArrayList<>(statsMap.values());
+    }
+
+    private void actualizarRendimientosFinales(
+            Map<Integer, EstadisticasJugador> statsMap,
+            Equipo equipo) {
+        for (IJugador jugador : equipo.getTitulares()) {
+            actualizarRendimientoFinal(statsMap, jugador);
+        }
+        for (IJugador jugador : equipo.getSuplentes()) {
+            actualizarRendimientoFinal(statsMap, jugador);
+        }
+    }
+
+    private void actualizarRendimientoFinal(
+            Map<Integer, EstadisticasJugador> statsMap,
+            IJugador jugador) {
+        EstadisticasJugador stats = statsMap.get(jugador.getId());
+        if (stats != null) {
+            stats.setRendimientoFinal(jugador.getRendimiento());
+        }
     }
 
     private void registrarPlantelCompleto(Map<Integer, EstadisticasJugador> statsMap, Equipo equipo, int minutos) {

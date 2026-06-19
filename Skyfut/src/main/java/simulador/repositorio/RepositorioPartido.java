@@ -14,6 +14,7 @@ import java.util.Optional;
 import simulador.composite.Partido;
 import simulador.domain.Equipo;
 import simulador.domain.EstadisticasJugador;
+import simulador.dto.EstadisticaJugadorTorneo;
 import simulador.dto.FixturePartido;
 import simulador.dto.Goleador;
 import simulador.dto.ResumenTorneo;
@@ -210,6 +211,49 @@ public class RepositorioPartido {
             throw new IllegalStateException("Error al listar fixture", e);
         }
         return fixture;
+    }
+
+    public List<EstadisticaJugadorTorneo> listarEstadisticasEquipo(int idTorneo, int idEquipo) {
+        String sql = """
+                SELECT j.nombre AS jugador, j.posicion,
+                       COUNT(sj.id_partido) AS partidos,
+                       SUM(sj.goles) AS goles,
+                       SUM(sj.asistencias) AS asistencias,
+                       SUM(sj.tarjetas_amarillas) AS tarjetas,
+                       SUM(sj.lesionado) AS lesiones,
+                       SUM(sj.minutos_jugados) AS minutos,
+                       AVG(sj.rendimiento_final) AS rendimiento_promedio
+                FROM estadistica_jugador sj
+                JOIN jugador j ON j.id = sj.id_jugador
+                JOIN partido p ON p.id = sj.id_partido
+                JOIN fase f ON f.id = p.id_fase
+                WHERE f.id_torneo = ?
+                  AND sj.id_equipo = ?
+                GROUP BY j.id, j.nombre, j.posicion
+                ORDER BY goles DESC, jugador
+                """;
+        List<EstadisticaJugadorTorneo> estadisticas = new ArrayList<>();
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idTorneo);
+            stmt.setInt(2, idEquipo);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    estadisticas.add(new EstadisticaJugadorTorneo(
+                            rs.getString("jugador"),
+                            rs.getString("posicion"),
+                            rs.getInt("partidos"),
+                            rs.getInt("goles"),
+                            rs.getInt("asistencias"),
+                            rs.getInt("tarjetas"),
+                            rs.getInt("lesiones"),
+                            rs.getInt("minutos"),
+                            rs.getDouble("rendimiento_promedio")));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Error al listar estadisticas del equipo", e);
+        }
+        return estadisticas;
     }
 
     public void limpiarEstadisticasTorneo(int idTorneo) {

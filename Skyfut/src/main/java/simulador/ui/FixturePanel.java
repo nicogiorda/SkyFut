@@ -21,8 +21,8 @@ import simulador.dto.FixturePartido;
 public class FixturePanel extends JPanel {
     private static final int CARD_W = 185;
     private static final int CARD_H = 84;
-    private static final int SMALL_W = 150;
-    private static final int SMALL_H = 66;
+    private static final int SMALL_W = CARD_W;
+    private static final int SMALL_H = CARD_H;
     private static final Color BLACK = Color.BLACK;
     private static final Color WHITE = new Color(252, 252, 250);
     private static final Color BLUE = new Color(50, 79, 245);
@@ -31,7 +31,8 @@ public class FixturePanel extends JPanel {
     private static final Color RED = new Color(229, 0, 0);
     private static final Color LIME = new Color(174, 232, 0);
     private static final Font TITLE = new Font("Arial Black", Font.BOLD, 18);
-    private static final Font TEAM = new Font("Arial", Font.BOLD, 13);
+    private static final Font TEAM = new Font("Arial", Font.PLAIN, 13);
+    private static final Font WINNER = new Font("Arial", Font.BOLD, 13);
     private static final Font MUTED = new Font("Arial", Font.BOLD, 13);
 
     private final List<FixturePartido> fixture;
@@ -39,7 +40,7 @@ public class FixturePanel extends JPanel {
     public FixturePanel(List<FixturePartido> fixture) {
         this.fixture = List.copyOf(fixture);
         setBackground(BLACK);
-        setPreferredSize(new Dimension(1380, 720));
+        setPreferredSize(new Dimension(1680, 720));
     }
 
     @Override
@@ -115,8 +116,10 @@ public class FixturePanel extends JPanel {
         connectPair(g2, l.rightOctavosX, l.rightOctavosY[2], CARD_W, CARD_H, l.rightCuartosX, l.rightCuartosY[1], SMALL_W, SMALL_H, true);
 
         g2.setColor(PURPLE);
-        connectPair(g2, l.leftCuartosX, l.leftCuartosY[0], SMALL_W, SMALL_H, l.leftSemiX, l.semiY, SMALL_W, SMALL_H, false);
-        connectPair(g2, l.rightCuartosX, l.rightCuartosY[0], SMALL_W, SMALL_H, l.rightSemiX, l.semiY, SMALL_W, SMALL_H, true);
+        connectSingle(g2, l.leftCuartosX, l.leftCuartosY[0], SMALL_W, SMALL_H, l.leftSemiX, l.semiY, SMALL_W, SMALL_H, false);
+        connectSingle(g2, l.leftCuartosX, l.leftCuartosY[1], SMALL_W, SMALL_H, l.leftSemiX, l.semiY, SMALL_W, SMALL_H, false);
+        connectSingle(g2, l.rightCuartosX, l.rightCuartosY[0], SMALL_W, SMALL_H, l.rightSemiX, l.semiY, SMALL_W, SMALL_H, true);
+        connectSingle(g2, l.rightCuartosX, l.rightCuartosY[1], SMALL_W, SMALL_H, l.rightSemiX, l.semiY, SMALL_W, SMALL_H, true);
         connectSingle(g2, l.leftSemiX, l.semiY, SMALL_W, SMALL_H, l.finalX, l.finalY, CARD_W, SMALL_H, false);
         connectSingle(g2, l.rightSemiX, l.semiY, SMALL_W, SMALL_H, l.finalX, l.finalY, CARD_W, SMALL_H, true);
     }
@@ -184,24 +187,32 @@ public class FixturePanel extends JPanel {
             return;
         }
 
-        g2.setFont(TEAM);
         g2.setColor(BLACK);
         int textX = accentRight ? x + 18 : x + 24;
-        int y1 = y + (h >= CARD_H ? 32 : 40);
+        int y1 = y + 32;
+        int y2 = y + h - 21;
         String local = textoEquipo(partido.equipoLocal(), partido.finalizado() ? partido.golesLocal() : null);
         String visitante = textoEquipo(partido.equipoVisitante(), partido.finalizado() ? partido.golesVisitante() : null);
+        boolean localGanador = false;
+        boolean visitanteGanador = false;
         if (partido.finalizado() && partido.ganador() != null) {
             if (partido.ganador().equals(partido.equipoLocal())) {
+                localGanador = true;
                 local = "> " + local;
             } else if (partido.ganador().equals(partido.equipoVisitante())) {
+                visitanteGanador = true;
                 visitante = "> " + visitante;
             }
         }
 
-        g2.drawString(recortar(g2, local, w - 34), textX, y1);
-        if (h >= CARD_H) {
-            g2.drawString(recortar(g2, visitante, w - 34), textX, y + 63);
-        }
+        drawTeamLine(g2, local, textX, y1, w - 34, localGanador);
+        drawTeamLine(g2, visitante, textX, y2, w - 34, visitanteGanador);
+    }
+
+    private void drawTeamLine(Graphics2D g2, String equipo, int x, int y, int ancho, boolean ganador) {
+        g2.setFont(ganador ? WINNER : TEAM);
+        g2.setColor(BLACK);
+        g2.drawString(recortar(g2, equipo, ancho), x, y);
     }
 
     private void drawShadow(Graphics2D g2, int x, int y, int w, int h) {

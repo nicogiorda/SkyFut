@@ -6,6 +6,7 @@ import java.util.UUID;
 import simulador.composite.Partido;
 import simulador.domain.Equipo;
 import simulador.domain.IJugador;
+import simulador.dto.EstadisticaJugadorTorneo;
 import simulador.dto.FixturePartido;
 import simulador.dto.ResumenTorneo;
 import simulador.motor.MotorSimulacion;
@@ -34,7 +35,7 @@ public class TorneoFacade {
         RepositorioTorneo repositorioTorneo = new RepositorioTorneo();
         this.repositorioEquipo = new RepositorioEquipo();
         RepositorioPartido repositorioPartido = new RepositorioPartido(repositorioEquipo);
-        GestorFases gestorFases = new GestorFases(repositorioTorneo, repositorioPartido);
+        GestorFases gestorFases = new GestorFases(repositorioTorneo);
         this.gestorTorneo = new GestorTorneo(repositorioTorneo, repositorioPartido);
         this.gestorPartido = new GestorPartido(
                 repositorioPartido,
@@ -88,6 +89,19 @@ public class TorneoFacade {
     public String consultarCampeon() {
         validarTorneoIniciado();
         return gestorTorneo.consultarCampeon(idTorneo);
+    }
+
+    public List<EstadisticaJugadorTorneo> consultarEstadisticasEquipoDt() {
+        validarTorneoIniciado();
+        if (equipoDt == null) {
+            throw new IllegalStateException("No hay un equipo del DT seleccionado");
+        }
+        return gestorTorneo.consultarEstadisticasEquipo(idTorneo, equipoDt.getId());
+    }
+
+    public void limpiarEstadisticasTorneoActual() {
+        validarTorneoIniciado();
+        gestorTorneo.limpiarEstadisticas(idTorneo);
     }
 
     public void realizarCambio(Equipo equipo, IJugador sale, IJugador entra) {

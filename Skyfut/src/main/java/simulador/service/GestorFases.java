@@ -4,16 +4,13 @@ import java.util.List;
 
 import simulador.composite.Partido;
 import simulador.dto.EquipoFixture;
-import simulador.repositorio.RepositorioPartido;
 import simulador.repositorio.RepositorioTorneo;
 
 public class GestorFases {
     private final RepositorioTorneo repositorioTorneo;
-    private final RepositorioPartido repositorioPartido;
 
-    public GestorFases(RepositorioTorneo repositorioTorneo, RepositorioPartido repositorioPartido) {
+    public GestorFases(RepositorioTorneo repositorioTorneo) {
         this.repositorioTorneo = repositorioTorneo;
-        this.repositorioPartido = repositorioPartido;
     }
 
     public void avanzarFaseSiCorresponde(int idTorneo, Partido partido) {
@@ -29,7 +26,6 @@ public class GestorFases {
 
         if (ganadores.size() == 1) {
             repositorioTorneo.finalizarTorneo(idTorneo, ganadores.get(0).idEquipo());
-            repositorioPartido.limpiarEstadisticasTorneo(idTorneo);
             return;
         }
 

@@ -5,6 +5,7 @@ import java.util.List;
 
 import simulador.domain.Equipo;
 import simulador.dto.EquipoFixture;
+import simulador.dto.EstadisticaJugadorTorneo;
 import simulador.dto.FixturePartido;
 import simulador.dto.ResumenTorneo;
 import simulador.repositorio.RepositorioPartido;
@@ -49,6 +50,14 @@ public class GestorTorneo {
 
     public String consultarCampeon(int idTorneo) {
         return repositorioTorneo.buscarNombreCampeon(idTorneo).orElse(null);
+    }
+
+    public List<EstadisticaJugadorTorneo> consultarEstadisticasEquipo(int idTorneo, int idEquipo) {
+        return repositorioPartido.listarEstadisticasEquipo(idTorneo, idEquipo);
+    }
+
+    public void limpiarEstadisticas(int idTorneo) {
+        repositorioPartido.limpiarEstadisticasTorneo(idTorneo);
     }
 
     public void asignarEquipoDT(int idTorneo, Equipo equipo) {

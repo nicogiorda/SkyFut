@@ -36,15 +36,19 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.table.DefaultTableModel;
 
 import simulador.composite.Partido;
 import simulador.decorator.JugadorDecorator;
 import simulador.domain.Equipo;
 import simulador.domain.IJugador;
+import simulador.dto.EstadisticaJugadorTorneo;
 import simulador.dto.FixturePartido;
 import simulador.dto.Goleador;
 import simulador.dto.ResumenTorneo;
@@ -88,6 +92,7 @@ public class SkyFutFrame extends JFrame {
     private final SkyButton aplicarTacticaButton;
     private final SkyButton simularSegundoTiempoButton;
     private final SkyButton verFixtureButton;
+    private final SkyButton consultarEstadisticasButton;
     private final SkyButton volverJugarButton;
     private final SkyButton refrescarResultadosButton;
     private final TabButton eventosTab;
@@ -104,6 +109,7 @@ public class SkyFutFrame extends JFrame {
     private final JPanel contenidoTabs;
     private boolean torneoCompleto;
     private boolean campeonAvisado;
+    private List<EstadisticaJugadorTorneo> estadisticasFinales = List.of();
 
     public SkyFutFrame() {
         this.facade = new TorneoFacade();
@@ -118,6 +124,7 @@ public class SkyFutFrame extends JFrame {
         this.aplicarTacticaButton = SkyButton.solid("Aplicar tactica", FOREST, WHITE);
         this.simularSegundoTiempoButton = SkyButton.solid("Simular segundo tiempo", LIME, BLACK);
         this.verFixtureButton = SkyButton.solid("Ver fixture", NAVY, WHITE);
+        this.consultarEstadisticasButton = SkyButton.solid("Consultar estadisticas", SKY, BLACK);
         this.volverJugarButton = SkyButton.solid("Volver a jugar", MAROON, WHITE);
         this.refrescarResultadosButton = SkyButton.solid("Refrescar resultados", BLACK, WHITE);
         this.eventosTab = new TabButton("Eventos", true);
@@ -142,8 +149,8 @@ public class SkyFutFrame extends JFrame {
     private void configurarVentana() {
         setTitle("SkyFut - Simulador de Torneo");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(1100, 720));
-        setSize(1280, 760);
+        setMinimumSize(new Dimension(1300, 720));
+        setSize(1680, 860);
         setLocationRelativeTo(null);
 
         BackgroundPanel root = new BackgroundPanel();
@@ -169,6 +176,11 @@ public class SkyFutFrame extends JFrame {
         gbc.gridwidth = 1;
         gbc.weightx = 0;
         panel.add(titulo, gbc);
+
+        gbc.gridx = 5;
+        gbc.gridwidth = 2;
+        consultarEstadisticasButton.setPreferredSize(new Dimension(210, 40));
+        panel.add(consultarEstadisticasButton, gbc);
 
         gbc.gridwidth = 1;
         gbc.gridx = 0;
@@ -240,11 +252,11 @@ public class SkyFutFrame extends JFrame {
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.weightx = 0.72;
+        gbc.weightx = 0.55;
         panel.add(izquierda, gbc);
 
         gbc.gridx = 1;
-        gbc.weightx = 0.28;
+        gbc.weightx = 0.45;
         gbc.insets = new Insets(0, 14, 0, 0);
         panel.add(crearPanelResumen(), gbc);
 
@@ -469,6 +481,7 @@ public class SkyFutFrame extends JFrame {
         aplicarTacticaButton.addActionListener(e -> ejecutarSeguro(this::aplicarTactica));
         simularSegundoTiempoButton.addActionListener(e -> ejecutarSeguro(this::simularSegundoTiempo));
         verFixtureButton.addActionListener(e -> ejecutarSeguro(this::mostrarFixture));
+        consultarEstadisticasButton.addActionListener(e -> ejecutarSeguro(this::mostrarEstadisticas));
         volverJugarButton.addActionListener(e -> ejecutarSeguro(this::volverAJugar));
         refrescarResultadosButton.addActionListener(e -> ejecutarSeguro(this::actualizarResultados));
         eventosTab.addActionListener(e -> seleccionarTab("EVENTOS"));
@@ -518,6 +531,7 @@ public class SkyFutFrame extends JFrame {
         facade.iniciarTorneo();
         torneoCompleto = false;
         campeonAvisado = false;
+        estadisticasFinales = List.of();
         estadoLabel.setText("Torneo iniciado");
         eventosArea.setText("Torneo generado. Simula el siguiente partido para comenzar.\n");
         actualizarResultados();
@@ -719,6 +733,7 @@ public class SkyFutFrame extends JFrame {
         iniciarTorneoButton.setEnabled(hayEquipoDt && !torneoIniciado);
         simularSiguienteButton.setEnabled(torneoIniciado && !entretiempoDt && !torneoCompleto);
         verFixtureButton.setEnabled(torneoIniciado);
+        consultarEstadisticasButton.setEnabled(torneoIniciado);
         volverJugarButton.setEnabled(torneoCompleto);
 
         saleCombo.setEnabled(entretiempoDt);
@@ -753,6 +768,65 @@ public class SkyFutFrame extends JFrame {
         dialog.setVisible(true);
     }
 
+    private void mostrarEstadisticas() {
+        List<EstadisticaJugadorTorneo> estadisticas = torneoCompleto && !estadisticasFinales.isEmpty()
+                ? estadisticasFinales
+                : facade.consultarEstadisticasEquipoDt();
+        mostrarEstadisticas(estadisticas, false);
+    }
+
+    private void mostrarEstadisticas(List<EstadisticaJugadorTorneo> estadisticas, boolean modal) {
+        String[] columnas = {
+                "Jugador", "Posicion", "Partidos", "Goles", "Amarillas",
+                "Lesiones", "Minutos", "Rendimiento promedio"
+        };
+        DefaultTableModel model = new DefaultTableModel(columnas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        for (EstadisticaJugadorTorneo estadistica : estadisticas) {
+            model.addRow(new Object[] {
+                    estadistica.jugador(),
+                    estadistica.posicion(),
+                    estadistica.partidos(),
+                    estadistica.goles(),
+                    estadistica.tarjetasAmarillas(),
+                    estadistica.lesiones(),
+                    estadistica.minutosJugados(),
+                    String.format("%.2f", estadistica.rendimientoPromedio())
+            });
+        }
+
+        JTable tabla = new JTable(model);
+        tabla.setAutoCreateRowSorter(true);
+        tabla.setFillsViewportHeight(true);
+        tabla.setFont(BODY_FONT);
+        tabla.setRowHeight(28);
+        tabla.getTableHeader().setFont(LABEL_FONT);
+
+        JPanel contenido = new JPanel(new BorderLayout(0, 10));
+        contenido.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        if (estadisticas.isEmpty()) {
+            contenido.add(
+                    new JLabel("No hay estadisticas registradas para este torneo.", SwingConstants.CENTER),
+                    BorderLayout.NORTH);
+        }
+        contenido.add(new JScrollPane(tabla), BorderLayout.CENTER);
+
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.addTab("Equipo DT", contenido);
+
+        JDialog dialog = new JDialog(this, "Estadisticas del torneo", modal);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.add(tabs, BorderLayout.CENTER);
+        dialog.setSize(1080, 540);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
     private boolean dtQuedoEliminado(Partido partido) {
         Equipo equipoDt = facade.getEquipoDt();
         return partido != null
@@ -782,6 +856,7 @@ public class SkyFutFrame extends JFrame {
         facade.reiniciarParaNuevoTorneo();
         torneoCompleto = false;
         campeonAvisado = false;
+        estadisticasFinales = List.of();
         equipoDtLabel.setText("DT sin equipo");
         estadoLabel.setText("Elegir un equipo para comenzar");
         partidoLabel.setText("Sin partido actual");
@@ -804,6 +879,9 @@ public class SkyFutFrame extends JFrame {
 
         campeonAvisado = true;
         mostrarInfo("Torneo finalizado. Campeon: " + campeon);
+        estadisticasFinales = List.copyOf(facade.consultarEstadisticasEquipoDt());
+        mostrarEstadisticas(estadisticasFinales, true);
+        facade.limpiarEstadisticasTorneoActual();
     }
 
     private void cargarJugadoresParaCambio() {

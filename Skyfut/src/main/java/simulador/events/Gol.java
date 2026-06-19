@@ -1,6 +1,7 @@
 package simulador.events;
 
 import simulador.composite.Partido;
+import simulador.decorator.GolDecorator;
 import simulador.domain.Equipo;
 import simulador.domain.IJugador;
 
@@ -22,6 +23,11 @@ public class Gol implements EventoPartido {
         } else if (equipo.equals(partido.getVisitante())) {
             partido.incrementarGolesVisitante();
         }
+
+        Equipo equipoPartido = equipo.equals(partido.getLocal())
+                ? partido.getLocal()
+                : partido.getVisitante();
+        equipoPartido.decorarTitular(autor, GolDecorator::new);
     }
 
     @Override
