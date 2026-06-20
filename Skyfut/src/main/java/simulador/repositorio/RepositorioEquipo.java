@@ -16,6 +16,29 @@ import simulador.strategy.TacticaEquilibrada;
 import simulador.strategy.TacticaOfensiva;
 import simulador.strategy.TacticaStrategy;
 
+/**
+ * [PATRON: Repository/DAO — DAO de Equipo]
+ *
+ * Que hace: Encapsula todo el acceso a datos de la tabla equipo y tactica para
+ * el dominio. Carga el plantel completo de cada equipo delegando en RepositorioJugador
+ * y construye el objeto TacticaStrategy correcto segun el nombre en BD.
+ * Es la unica clase que sabe como mapear una fila de equipo+tactica a un objeto Equipo
+ * con su List<IJugador> de titulares y suplentes.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna)
+ * - Agregacion con: RepositorioJugador repositorioJugador (colaborador para cargar plantel),
+ *   Connection connection (obtenida del Singleton DatabaseConnection)
+ * - Usada por (dependencia): TorneoFacade (para cargar y seleccionar equipos),
+ *   RepositorioPartido (para reconstruir Partido con sus Equipos completos)
+ * - Crea (Creator GRASP): Equipo (con id, nombre, titulares, suplentes y tactica),
+ *   TacticaStrategy concretas (TacticaDefensiva, Ofensiva, Equilibrada)
+ *
+ * GRASP:
+ * - Bajo Acoplamiento: cumple porque es la unica clase responsable del acceso a BD
+ *   para equipos; ninguna otra clase ejecuta SQL de equipo directamente.
+ */
 public class RepositorioEquipo {
     private final Connection connection;
     private final RepositorioJugador repositorioJugador;

@@ -11,6 +11,31 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/**
+ * [PATRON: Singleton — Singleton]
+ *
+ * Que hace: Garantiza que exista una unica instancia de conexion SQLite durante
+ * toda la ejecucion del programa. En el primer acceso via getInstance() carga el
+ * driver JDBC, resuelve la ruta del archivo torneo.db (buscando hacia arriba en
+ * el filesystem desde el directorio de ejecucion hasta encontrar el directorio db/
+ * con schema.sql y seed.sql, con fallback al classpath), crea la conexion, activa
+ * las foreign keys, configura autoCommit=false para control transaccional manual,
+ * y ejecuta schema.sql y seed.sql para asegurar que las tablas y datos existen.
+ * getConnection() es llamado por todos los repositorios.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: Connection connection (posee la unica conexion JDBC del sistema)
+ * - Asociacion con: (ninguna adicional)
+ * - Usada por (dependencia): RepositorioEquipo, RepositorioJugador, RepositorioPartido,
+ *   RepositorioTorneo (todos llaman a DatabaseConnection.getInstance().getConnection())
+ * - Crea (Creator GRASP): se instancia a si misma en getInstance() (patron Singleton)
+ *
+ * GRASP:
+ * - Bajo Acoplamiento: cumple porque centraliza la creacion y configuracion de la
+ *   conexion en un solo lugar; los repositorios no saben como se crea ni donde esta
+ *   el archivo de BD, solo obtienen la conexion ya configurada.
+ */
 public class DatabaseConnection {
     private static DatabaseConnection instancia;
     private static final String DB_DIRECTORY = "db";

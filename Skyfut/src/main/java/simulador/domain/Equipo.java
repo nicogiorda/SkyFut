@@ -6,6 +6,32 @@ import java.util.function.Function;
 
 import simulador.strategy.TacticaStrategy;
 
+/**
+ * [PATRON: Strategy — Context; Decorator — Client]
+ *
+ * Que hace: Representa a un equipo de futbol con su plantel (titulares y suplentes)
+ * y su tactica activa. Es el Context del patron Strategy porque delega el calculo
+ * de modificadores al objeto TacticaStrategy que tiene asignado. Tambien es cliente
+ * del patron Decorator porque sus listas almacenan IJugador (permitiendo decorators
+ * apilados), y provee decorarTitular() para aplicar decorators en tiempo de ejecucion.
+ * sustituir() realiza el cambio de jugadores en memoria durante el entretiempo.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: List<IJugador> titulares, List<IJugador> suplentes
+ *   (el equipo posee y gestiona su plantel)
+ * - Asociacion con: TacticaStrategy (puede cambiarse durante el entretiempo via setTactica())
+ * - Usada por (dependencia): Partido (la contiene como local/visitante), ContextoEvento,
+ *   GolFactory, TarjetaFactory, LesionFactory, CambioFactory, SkyFutFrame,
+ *   CalculadorEstadisticas, RepositorioEquipo (la crea)
+ * - Crea (Creator GRASP): (no aplica directamente)
+ *
+ * GRASP:
+ * - Information Expert: cumple porque es quien conoce su propio plantel y calcula
+ *   getRendimientoTotal() sumando el rendimiento de todos sus titulares.
+ * - Alta Cohesion: cumple porque todas sus responsabilidades giran en torno a
+ *   gestionar el plantel y la tactica del equipo.
+ */
 public class Equipo {
     private int id;
     private String nombre;

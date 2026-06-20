@@ -17,6 +17,30 @@ import simulador.state.EstadoPartido;
 import simulador.state.Finalizado;
 import simulador.state.NoIniciado;
 
+/**
+ * [PATRON: Composite — Leaf; State — Context (doble rol)]
+ *
+ * Que hace: Representa un partido individual. Como Leaf del Composite, es la hoja
+ * del arbol: implementa getResultados() y getGoleadores() con sus propios datos.
+ * Como Context del State, delega iniciar() y avanzarMinuto() al EstadoPartido actual,
+ * que gestiona las transiciones (NoIniciado → PrimerTiempo → Entretiempo → SegundoTiempo
+ * → Finalizado). En caso de empate, getGanador() desempata por rendimientoTotal.
+ *
+ * Relaciones:
+ * - Implementa: ComponenteTorneo (rol Leaf del Composite)
+ * - Composicion con: Equipo local, Equipo visitante (el partido contiene a los equipos
+ *   durante la simulacion), List<EventoPartido> eventos (acumula todos los eventos)
+ * - Asociacion con: EstadoPartido estado (puede cambiar en tiempo de ejecucion
+ *   via setEstado(); el partido no crea los estados, los estados se autoconstruyen)
+ * - Usada por (dependencia): MotorSimulacion (lo conduce minuto a minuto),
+ *   GestorPartido (lo prepara y cierra), RepositorioPartido (lo persiste),
+ *   TorneoFacade (lo expone a la UI)
+ * - Crea (Creator GRASP): ResultadoPartido y Goleador (en getResultados/getGoleadores)
+ *
+ * GRASP:
+ * - Information Expert: cumple porque es quien conoce su propio marcador, estado,
+ *   equipos y eventos, y por lo tanto puede calcular el ganador y los goleadores.
+ */
 public class Partido implements ComponenteTorneo {
     private final int id;
     private Equipo local;

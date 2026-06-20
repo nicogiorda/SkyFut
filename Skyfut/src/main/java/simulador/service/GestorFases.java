@@ -6,6 +6,29 @@ import simulador.composite.Partido;
 import simulador.dto.EquipoFixture;
 import simulador.repositorio.RepositorioTorneo;
 
+/**
+ * [PATRON: (ninguno) — Servicio de progresion de fases]
+ *
+ * Que hace: Luego de cada partido, verifica si la fase actual se completo (todos
+ * sus partidos finalizados). Si es asi, la marca como completa y decide el paso
+ * siguiente: si queda un unico ganador, finaliza el torneo; si quedan mas equipos,
+ * crea la siguiente fase (Octavos → Cuartos → Semifinal → Final) con los ganadores.
+ * Toda la persistencia se delega a RepositorioTorneo.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna)
+ * - Agregacion con: RepositorioTorneo repositorioTorneo
+ * - Usada por (dependencia): GestorPartido (la llama en cerrarPartido() despues
+ *   de persistir el resultado), EquipoFixture (como proyeccion de ganadores)
+ * - Crea (Creator GRASP): (no aplica directamente — delega creacion a repositorioTorneo)
+ *
+ * GRASP:
+ * - Alta Cohesion: cumple porque su unica responsabilidad es manejar la logica
+ *   de avance entre fases del torneo eliminatorio.
+ * - Bajo Acoplamiento: cumple porque solo depende de RepositorioTorneo y de
+ *   Partido (para obtener el id del partido y consultar su fase).
+ */
 public class GestorFases {
     private final RepositorioTorneo repositorioTorneo;
 

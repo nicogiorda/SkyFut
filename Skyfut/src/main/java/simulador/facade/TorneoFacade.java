@@ -19,6 +19,35 @@ import simulador.service.GestorPartido;
 import simulador.service.GestorTorneo;
 import simulador.strategy.TacticaStrategy;
 
+/**
+ * [PATRON: Facade — Facade]
+ *
+ * Que hace: Es el unico punto de entrada entre la capa de presentacion (SkyFutFrame)
+ * y la logica de negocio/servicios. Simplifica la interfaz del subsistema
+ * (GestorTorneo, GestorPartido, RepositorioEquipo) exponiendo operaciones de alto
+ * nivel. Mantiene el estado de sesion: idTorneo, equipoDt y partidoActual.
+ * Valida precondiciones (torneo iniciado, partido activo, estado permiteCambios)
+ * antes de delegar a los servicios internos.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna — agrega servicios)
+ * - Agregacion con: GestorTorneo (coordina ciclo de vida del torneo),
+ *   GestorPartido (coordina simulacion de partidos),
+ *   RepositorioEquipo (carga equipos disponibles)
+ * - Asociacion con: Equipo equipoDt (el equipo seleccionado por el DT; puede ser null),
+ *   Partido partidoActual (el partido en curso; puede ser null)
+ * - Usada por (dependencia): SkyFutFrame (es la UNICA clase que la usa directamente)
+ * - Crea (Creator GRASP): instancia internamente RepositorioTorneo, RepositorioPartido,
+ *   GestorFases, GestorTorneo, GestorPartido, MotorSimulacion, CalculadorEstadisticas
+ *
+ * GRASP:
+ * - Controller (GRASP Controller): cumple porque recibe los eventos de la UI
+ *   (iniciarTorneo, simularPartido, realizarCambio, cambiarTactica) y los delega
+ *   a los servicios correspondientes sin tener logica de negocio propia.
+ * - Bajo Acoplamiento: cumple porque SkyFutFrame solo conoce TorneoFacade;
+ *   no tiene referencias directas a GestorTorneo, MotorSimulacion, ni repositorios.
+ */
 public class TorneoFacade {
     private static final String NOMBRE_TORNEO_BASE = "SkyFut Champions 2026";
 

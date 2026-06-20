@@ -18,6 +18,29 @@ import javax.swing.JPanel;
 
 import simulador.dto.FixturePartido;
 
+/**
+ * [PATRON: (ninguno) — Componente visual Swing personalizado]
+ *
+ * Que hace: JPanel custom que dibuja graficamente el cuadro del torneo (bracket)
+ * con todas sus fases, tarjetas de partidos, conectores entre rondas y titulos de
+ * fase. Recibe la lista de FixturePartido en construccion (inmutable via List.copyOf())
+ * y sobreescribe paintComponent() para dibujar con Graphics2D. Agrupa los partidos
+ * por fase via agruparPorFase() y calcula las coordenadas de cada tarjeta segun
+ * un objeto Layout interno que distribuye el espacio disponible.
+ *
+ * Relaciones:
+ * - Hereda de: JPanel (Swing)
+ * - Composicion con: List<FixturePartido> fixture (copia defensiva inmutable;
+ *   el panel posee sus datos de presentacion)
+ * - Asociacion con: (ninguna adicional)
+ * - Usada por (dependencia): FixturePartido (unica clase de negocio que conoce),
+ *   SkyFutFrame (la instancia y la muestra en un JDialog al hacer click en "Fixture")
+ * - Crea (Creator GRASP): (no aplica — solo consume datos)
+ *
+ * GRASP:
+ * - Bajo Acoplamiento: cumple porque solo depende del DTO FixturePartido; no
+ *   necesita conocer Partido, Fase, Torneo ni ninguna clase de dominio ni servicio.
+ */
 public class FixturePanel extends JPanel {
     private static final int CARD_W = 185;
     private static final int CARD_H = 84;

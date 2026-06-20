@@ -13,6 +13,33 @@ import simulador.motor.MotorSimulacion;
 import simulador.repositorio.RepositorioPartido;
 import simulador.strategy.TacticaStrategy;
 
+/**
+ * [PATRON: (ninguno) — Servicio coordinador de partidos]
+ *
+ * Que hace: Orquesta la simulacion de cada partido del torneo. Coordina al
+ * MotorSimulacion (simula tiempos), CalculadorEstadisticas (calcula stats al cierre),
+ * RepositorioPartido (persiste resultado, eventos y estadisticas) y GestorFases
+ * (verifica si la fase se completo y crea la siguiente). Si el DT es eliminado,
+ * llama a simularRestoTorneoAutomatico() para terminar el torneo sin interaccion.
+ * Tambien gestiona cambios manuales del DT (realizarCambio, cambiarTactica) y
+ * aplica cambios automaticos al rival durante el entretiempo.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna)
+ * - Agregacion con: RepositorioPartido repositorioPartido, MotorSimulacion motor,
+ *   CalculadorEstadisticas calculadorEstadisticas, GestorFases gestorFases
+ * - Usada por (dependencia): TorneoFacade (delega simulacion, cambios y tacticas)
+ * - Crea (Creator GRASP): CambioFactory (en modo manual para cambios del DT),
+ *   ContextoEvento (para cambios manuales)
+ *
+ * GRASP:
+ * - Alta Cohesion: cumple porque todas sus responsabilidades se centran en
+ *   orquestar el flujo de un partido: simular, cerrar, persistir, avanzar fase.
+ * - Controller (GRASP Controller — coordinador de casos de uso internos): cumple
+ *   porque recibe las peticiones de TorneoFacade y coordina los colaboradores
+ *   sin ejecutar logica de dominio propia.
+ */
 public class GestorPartido {
     private final RepositorioPartido repositorioPartido;
     private final MotorSimulacion motor;

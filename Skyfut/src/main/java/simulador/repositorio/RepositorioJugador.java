@@ -11,6 +11,26 @@ import simulador.domain.IJugador;
 import simulador.domain.Jugador;
 import simulador.persistence.DatabaseConnection;
 
+/**
+ * [PATRON: Repository/DAO — DAO de Jugador]
+ *
+ * Que hace: Encapsula todo el acceso a datos de la tabla jugador (y su union con
+ * plantel). listarPorEquipoYRol() hace el JOIN jugador+plantel filtrando por equipo
+ * y rol_inicial (TITULAR/SUPLENTE), ordenando por numero_dorsal. Crea objetos Jugador
+ * (ConcreteComponent del Decorator) para poblar las listas de Equipo.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna)
+ * - Agregacion con: Connection connection (obtenida del Singleton DatabaseConnection)
+ * - Usada por (dependencia): RepositorioEquipo (la llama para cargar titulares
+ *   y suplentes de cada equipo al construir un Equipo)
+ * - Crea (Creator GRASP): Jugador (instancias con id, nombre, posicion, rendimientoBase)
+ *
+ * GRASP:
+ * - Bajo Acoplamiento: cumple porque es la unica clase responsable del acceso a BD
+ *   para jugadores; RepositorioEquipo la delega en lugar de duplicar el SQL.
+ */
 public class RepositorioJugador {
     private final Connection connection;
 

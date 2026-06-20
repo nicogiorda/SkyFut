@@ -11,6 +11,29 @@ import simulador.dto.ResumenTorneo;
 import simulador.repositorio.RepositorioPartido;
 import simulador.repositorio.RepositorioTorneo;
 
+/**
+ * [PATRON: (ninguno) — Servicio de ciclo de vida del torneo]
+ *
+ * Que hace: Gestiona el ciclo de vida del torneo: creacion (con shuffle de los 16
+ * equipos y generacion de Octavos de Final), consulta de resultados, fixture,
+ * campeon y estadisticas del equipo DT. Delega toda la persistencia a los
+ * repositorios; no tiene logica de simulacion ni accede directamente a SQLite.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna)
+ * - Agregacion con: RepositorioTorneo repositorioTorneo,
+ *   RepositorioPartido repositorioPartido
+ * - Usada por (dependencia): TorneoFacade (la delega en iniciarTorneo,
+ *   consultarResultados, consultarFixture, consultarCampeon, consultarEstadisticasEquipoDt)
+ * - Crea (Creator GRASP): (no aplica directamente — delega creacion a repositorios)
+ *
+ * GRASP:
+ * - Alta Cohesion: cumple porque todas sus responsabilidades estan relacionadas
+ *   con el ciclo de vida del torneo (crear, consultar, finalizar).
+ * - Bajo Acoplamiento: cumple porque solo depende de los repositorios (abstracciones
+ *   de persistencia) y de DTOs, no de la logica de simulacion.
+ */
 public class GestorTorneo {
     private static final String FASE_OCTAVOS = "Octavos de Final";
     private static final int EQUIPOS_OCTAVOS = 16;

@@ -6,7 +6,26 @@ import simulador.decorator.TarjetaAmarillaDecorator;
 import simulador.domain.Equipo;
 import simulador.domain.IJugador;
 
-
+/**
+ * [PATRON: Factory Method — ConcreteProduct]
+ *
+ * Que hace: Representa el evento de una tarjeta amarilla recibida por un jugador.
+ * Al aplicarse envuelve al jugador sancionado en un TarjetaAmarillaDecorator,
+ * reduciendo su rendimiento en 0.10 para el resto del partido.
+ *
+ * Relaciones:
+ * - Implementa: EventoPartido
+ * - Composicion con: (ninguna — solo referencias)
+ * - Asociacion con: IJugador jugador (el amonestado), Equipo equipo (su equipo)
+ * - Usada por (dependencia): Partido (recibe aplicar()), TarjetaFactory (la instancia),
+ *   CalculadorEstadisticas (la detecta via instanceof para incrementar tarjetas),
+ *   RepositorioPartido (la persiste via instanceof)
+ * - Crea (Creator GRASP): (no aplica)
+ *
+ * GRASP:
+ * - Information Expert: cumple porque es quien sabe como aplicarse sobre un Partido:
+ *   localizar al jugador en el equipo correcto y aplicar el decorator de amonestacion.
+ */
 public class Tarjeta implements EventoPartido {
     private final int minuto;
     private final IJugador jugador;

@@ -15,6 +15,29 @@ import simulador.events.Gol;
 import simulador.events.Lesion;
 import simulador.events.Tarjeta;
 
+/**
+ * [PATRON: (ninguno) — Servicio de calculo de estadisticas]
+ *
+ * Que hace: Calcula las estadisticas por jugador de un partido iterando sus eventos.
+ * Para cada Gol incrementa goles del autor; para Tarjeta incrementa amarillas;
+ * para Lesion marca lesionado=true; para Cambio ajusta los minutos jugados del
+ * jugador que sale y registra al que entra. Finalmente actualiza el rendimientoFinal
+ * de cada jugador segun su estado actual (con todos los decorators aplicados).
+ * Retorna una List<EstadisticasJugador>, una por jugador que participo.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna)
+ * - Agregacion con: (ninguna — sin estado propio)
+ * - Usada por (dependencia): Partido (para leer sus eventos y jugadores),
+ *   GestorPartido (la llama en cerrarPartido() y pasa el resultado a RepositorioPartido)
+ * - Crea (Creator GRASP): EstadisticasJugador (una instancia por jugador del partido)
+ *
+ * GRASP:
+ * - Information Expert: cumple porque es quien tiene acceso a todos los eventos del
+ *   partido y puede calcular las estadisticas derivadas; ninguna otra clase tiene
+ *   toda esa informacion concentrada de forma tan natural.
+ */
 public class CalculadorEstadisticas {
     public List<EstadisticasJugador> calcular(Partido partido) {
         Map<Integer, EstadisticasJugador> statsMap = new LinkedHashMap<>();

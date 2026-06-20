@@ -2,6 +2,31 @@ package simulador.dto;
 
 import simulador.domain.Equipo;
 
+/**
+ * [PATRON: (ninguno) — DTO inmutable; desacopla factories de Partido]
+ *
+ * Que hace: Empaqueta el estado relevante del partido en un minuto dado para
+ * pasarlo a las factories sin exponer el objeto Partido completo. Es inmutable
+ * (clase final, todos los campos final, sin setters). Calcula getRendimientoAtaque()
+ * y getRendimientoDefensa() aplicando los modificadores tacticos del equipo y el
+ * modificador del equipo favorecido (DT), desacoplando esta logica de las factories.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna — referencias no exclusivas)
+ * - Asociacion con: Equipo local, Equipo visitante (referencias de solo lectura)
+ * - Usada por (dependencia): GolFactory, TarjetaFactory, LesionFactory, CambioFactory
+ *   (todas reciben un ContextoEvento en crearEvento()), MotorSimulacion (lo construye
+ *   y lo pasa a las factories), GestorPartido (lo construye para cambios manuales)
+ * - Crea (Creator GRASP): (no aplica)
+ *
+ * GRASP:
+ * - Bajo Acoplamiento: cumple porque aísla a las factories del objeto Partido completo;
+ *   solo reciben el contexto minimo necesario para tomar su decision.
+ * - Information Expert: cumple porque centraliza el calculo del rendimiento efectivo
+ *   (rendimientoTotal * modificadorTactica * modificadorEquipoDT), que requiere
+ *   informacion de Equipo y TacticaStrategy.
+ */
 public final class ContextoEvento {
     private final int minuto;
     private final Equipo local;

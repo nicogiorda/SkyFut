@@ -59,6 +59,33 @@ import simulador.strategy.TacticaEquilibrada;
 import simulador.strategy.TacticaOfensiva;
 import simulador.strategy.TacticaStrategy;
 
+/**
+ * [PATRON: (ninguno) — Vista principal Swing]
+ *
+ * Que hace: Es la ventana principal de la aplicacion. Construye y gestiona toda la
+ * interfaz grafica: seleccion de equipo DT, pestanas de juego (Partido, Fixture,
+ * Resultados, Estadisticas), controles del entretiempo (cambios y tactica), log de
+ * eventos y tabla de estadisticas. Se comunica EXCLUSIVAMENTE con TorneoFacade,
+ * respetando el patron Facade. Contiene clases internas para los componentes
+ * graficos custom: BackgroundPanel, RoundedPanel, DecoratedContent, SkyButton, TabButton,
+ * SpeedMarks.
+ *
+ * Relaciones:
+ * - Hereda de: JFrame (Swing)
+ * - Composicion con: multiples controles Swing (JComboBox, JTextArea, JTable, JPanel, etc.)
+ * - Asociacion con: TorneoFacade torneoFacade (unica referencia al subsistema de negocio;
+ *   todos los eventos de usuario se delegan a ella)
+ * - Usada por (dependencia): Main (la instancia y la hace visible en el EDT),
+ *   FixturePanel (usado en un JDialog para mostrar el cuadro del torneo)
+ * - Crea (Creator GRASP): TorneoFacade (en el constructor), FixturePanel (al mostrar fixture)
+ *
+ * GRASP:
+ * - Controller (GRASP Controller): cumple porque recibe los gestos del usuario
+ *   (clicks, selecciones) y los delega a TorneoFacade; no contiene logica de negocio.
+ * - Bajo Acoplamiento: cumple porque la unica clase de negocio que conoce es
+ *   TorneoFacade; no tiene referencias directas a GestorPartido, MotorSimulacion,
+ *   repositorios ni clases de dominio (excepto las necesarias para mostrar datos).
+ */
 public class SkyFutFrame extends JFrame {
     private static final Color BLACK = Color.BLACK;
     private static final Color INK = new Color(8, 8, 10);

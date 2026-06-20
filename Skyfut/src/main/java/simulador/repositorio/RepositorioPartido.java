@@ -26,6 +26,32 @@ import simulador.events.Lesion;
 import simulador.events.Tarjeta;
 import simulador.persistence.DatabaseConnection;
 
+/**
+ * [PATRON: Repository/DAO — DAO de Partido, EstadisticasJugador y EventoPartido]
+ *
+ * Que hace: Encapsula todo el acceso a datos de las tablas partido, evento_partido,
+ * estadistica_jugador y estado_jugador_torneo. Persiste resultados, eventos y
+ * estadisticas de cada partido. Tambien reconstruye objetos Partido desde BD
+ * (via RepositorioEquipo para cargar los Equipo completos). Maneja diferenciacion
+ * de tipos de evento (Gol, Tarjeta, Lesion, Cambio) via instanceof para mapear
+ * los parametros SQL correctos. Realiza rollback ante cualquier SQLException.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna)
+ * - Agregacion con: Connection connection (Singleton DatabaseConnection),
+ *   RepositorioEquipo repositorioEquipo (para reconstruir Partido con Equipos)
+ * - Usada por (dependencia): GestorPartido (para guardar resultado, eventos y stats),
+ *   GestorTorneo (para consultarResumen, listarFixture, listarEstadisticasEquipo)
+ * - Crea (Creator GRASP): Partido (en mapearSiguientePartido()),
+ *   ResultadoPartido, Goleador, FixturePartido, EstadisticaJugadorTorneo, ResumenTorneo
+ *
+ * GRASP:
+ * - Bajo Acoplamiento: cumple porque centraliza todo el SQL de partido en una sola
+ *   clase; el resto del sistema no necesita conocer el esquema de BD para partidos.
+ * - Information Expert: cumple porque es quien conoce como mapear cada tipo de evento
+ *   concreto (Gol/Tarjeta/Lesion/Cambio) a los campos de la tabla evento_partido.
+ */
 public class RepositorioPartido {
     private final Connection connection;
     private final RepositorioEquipo repositorioEquipo;

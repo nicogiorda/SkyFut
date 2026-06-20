@@ -5,6 +5,27 @@ import simulador.decorator.LesionDecorator;
 import simulador.domain.Equipo;
 import simulador.domain.IJugador;
 
+/**
+ * [PATRON: Factory Method — ConcreteProduct]
+ *
+ * Que hace: Representa el evento de una lesion sufrida por un jugador durante
+ * el partido. Al aplicarse envuelve al jugador afectado en un LesionDecorator,
+ * reduciendo su rendimiento al 30% del actual. El jugador sigue en cancha pero
+ * gravemente limitado.
+ *
+ * Relaciones:
+ * - Implementa: EventoPartido
+ * - Composicion con: (ninguna — solo referencias)
+ * - Asociacion con: IJugador jugador (el lesionado), Equipo equipo (su equipo)
+ * - Usada por (dependencia): Partido (recibe aplicar()), LesionFactory (la instancia),
+ *   CalculadorEstadisticas (la detecta via instanceof para marcar lesionado=true),
+ *   RepositorioPartido (la persiste via instanceof)
+ * - Crea (Creator GRASP): (no aplica)
+ *
+ * GRASP:
+ * - Information Expert: cumple porque es quien sabe como aplicarse sobre un Partido:
+ *   localizar al jugador en el equipo correcto y aplicar el decorator de lesion.
+ */
 public class Lesion implements EventoPartido {
     private final int minuto;
     private final IJugador jugador;

@@ -14,6 +14,31 @@ import simulador.events.GolFactory;
 import simulador.events.LesionFactory;
 import simulador.events.TarjetaFactory;
 
+/**
+ * [PATRON: (ninguno) — Motor de simulacion]
+ *
+ * Que hace: Conduce la simulacion minuto a minuto de un partido. En cada minuto
+ * construye un ContextoEvento y lo pasa a cada EventoFactory en su lista; si la
+ * factory decide crear un evento, lo aplica y registra en el Partido. La constante
+ * MODIFICADOR_EQUIPO_DT = 1.12 da una ventaja del 12% al equipo del DT para
+ * equilibrar la experiencia de juego. Aplica CansancioDecorator a todos los titulares
+ * al finalizar cada tiempo. No contiene aleatoriedad propia: la delega a las factories.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna — solo agrega)
+ * - Agregacion con: List<EventoFactory> eventoFactories (GolFactory, TarjetaFactory,
+ *   LesionFactory — lista inmutable), CambioFactory cambioFactory (para cambios automaticos)
+ * - Usada por (dependencia): GestorPartido (la tiene como colaborador para simularPartido,
+ *   simularPrimerTiempo, simularSegundoTiempo, simularCambiosAutomaticos)
+ * - Crea (Creator GRASP): ContextoEvento (en simularMinuto, con los datos del partido)
+ *
+ * GRASP:
+ * - Bajo Acoplamiento: cumple porque depende de las abstracciones EventoFactory y
+ *   Partido, no de las factories concretas ni de los eventos concretos.
+ * - Alta Cohesion: cumple porque toda su responsabilidad es conducir el loop de
+ *   simulacion minuto a minuto, delegando la logica de eventos a las factories.
+ */
 public class MotorSimulacion {
     private static final double MODIFICADOR_EQUIPO_DT = 1.12;
 

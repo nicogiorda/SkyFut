@@ -13,6 +13,29 @@ import java.util.Optional;
 import simulador.dto.EquipoFixture;
 import simulador.persistence.DatabaseConnection;
 
+/**
+ * [PATRON: Repository/DAO — DAO de Torneo y Fase]
+ *
+ * Que hace: Encapsula todo el acceso a datos de las tablas torneo y fase.
+ * Crea torneos y fases, asigna el equipo DT, guarda los partidos iniciales de
+ * cada fase, consulta si una fase esta completa, lista ganadores y crea la siguiente
+ * fase. El record interno FaseInfo es una proyeccion minima (id, nombre, orden).
+ * Realiza rollback ante cualquier SQLException. Toda la logica de "cual es la
+ * siguiente fase" esta en GestorFases; este repositorio solo persiste.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna)
+ * - Agregacion con: Connection connection (Singleton DatabaseConnection)
+ * - Usada por (dependencia): GestorTorneo (para crear torneo y fase inicial),
+ *   GestorFases (para verificar completitud, marcar completa, crear siguiente fase)
+ * - Crea (Creator GRASP): EquipoFixture (en listarEquiposConPlantelCompleto y
+ *   listarGanadoresFase), FaseInfo (record interno, proyeccion de fase)
+ *
+ * GRASP:
+ * - Bajo Acoplamiento: cumple porque centraliza todo el SQL de torneo/fase;
+ *   GestorTorneo y GestorFases no necesitan conocer el esquema de BD.
+ */
 public class RepositorioTorneo {
     private final Connection connection;
 

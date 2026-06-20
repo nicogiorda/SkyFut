@@ -8,7 +8,28 @@ import simulador.dto.ContextoEvento;
 import simulador.events.EventoFactory;
 import simulador.composite.Partido;
 
-// Cambio
+/**
+ * [PATRON: Factory Method — ConcreteProduct]
+ *
+ * Que hace: Representa el evento de una sustitucion de jugadores durante el partido.
+ * Al aplicarse llama a equipo.sustituir(sale, entra), moviendo al jugador saliente
+ * de titulares a suplentes y al entrante de suplentes a titulares, en memoria.
+ * El jugador que entra arranca sin ningun decorator acumulado.
+ *
+ * Relaciones:
+ * - Implementa: EventoPartido
+ * - Composicion con: (ninguna — solo referencias)
+ * - Asociacion con: IJugador sale (sale del campo), IJugador entra (entra al campo),
+ *   Equipo equipo (el equipo que realiza el cambio)
+ * - Usada por (dependencia): Partido (recibe aplicar()), CambioFactory (la instancia),
+ *   CalculadorEstadisticas (la detecta via instanceof para calcular minutos jugados),
+ *   RepositorioPartido (la persiste via instanceof)
+ * - Crea (Creator GRASP): (no aplica)
+ *
+ * GRASP:
+ * - Information Expert: cumple porque es quien sabe como aplicarse sobre un Partido:
+ *   delegar la sustitucion al equipo que conoce su propio plantel.
+ */
 public class Cambio implements EventoPartido {
     private final int minuto;
     private final IJugador sale;

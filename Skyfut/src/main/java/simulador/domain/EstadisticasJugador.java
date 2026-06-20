@@ -1,5 +1,29 @@
 package simulador.domain;
 
+/**
+ * [PATRON: (ninguno) — Contenedor de datos de dominio]
+ *
+ * Que hace: Acumula las estadisticas de un jugador durante un partido especifico:
+ * goles, asistencias, tarjetas amarillas, lesion, minutos jugados y rendimiento final.
+ * Se crea una instancia por jugador por partido. No es un record porque sus campos
+ * se actualizan progresivamente a medida que CalculadorEstadisticas procesa los eventos.
+ *
+ * Relaciones:
+ * - Hereda de: (ninguna)
+ * - Composicion con: (ninguna)
+ * - Asociacion con: IJugador (referencia al jugador al que pertenecen estas estadisticas;
+ *   la asociacion es de solo lectura, campo final)
+ * - Usada por (dependencia): CalculadorEstadisticas (la crea y popula),
+ *   GestorPartido (la recibe y pasa al repositorio),
+ *   RepositorioPartido (la persiste en estadistica_jugador y estado_jugador_torneo)
+ * - Crea (Creator GRASP): (no aplica)
+ *
+ * GRASP:
+ * - Alta Cohesion: cumple porque agrupa exclusivamente los datos estadisticos
+ *   de un jugador en un partido, sin mezclar logica de negocio.
+ * - Information Expert: cumple porque es quien sabe como incrementar sus propios
+ *   contadores (incrementarGoles, incrementarTarjetas, etc.).
+ */
 public class EstadisticasJugador {
     private final IJugador jugador;
     private final int idEquipo;
