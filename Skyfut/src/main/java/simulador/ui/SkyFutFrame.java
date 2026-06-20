@@ -301,9 +301,11 @@ public class SkyFutFrame extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
+        gbc.gridwidth = 4;
         panel.add(titulo("ENTRETIEMPO"), gbc);
 
         gbc.gridx = 4;
+        gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
         panel.add(new SpeedMarks(PURPLE), gbc);
         gbc.anchor = GridBagConstraints.CENTER;

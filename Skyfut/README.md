@@ -80,10 +80,12 @@ La clase de arranque es **`Main`** (paquete `simulador.main`):
 
 Se abre la ventana principal del simulador (`SkyFutFrame`) y la base de datos se inicializa automáticamente.
 
-**Desde la terminal** (si ya compilaste un JAR ejecutable):
+**Desde la terminal**, ubicándote dentro de `Skyfut/`:
 ```bash
-java -jar SkyFut.jar
+mvn exec:java
 ```
+
+> El JAR simple generado por Maven no incluye internamente el driver SQLite. Para ejecutar sin configurar manualmente el classpath, usá IntelliJ o `mvn exec:java`.
 
 ---
 
@@ -102,7 +104,7 @@ El archivo `torneo.db` **no está en el repositorio** (está en `.gitignore`). C
 Como consecuencia:
 
 - **Primera ejecución:** se crea el archivo `.db` en `Skyfut/db/`, se construye el esquema y se cargan los datos iniciales (equipos y jugadores).
-- **Ejecuciones siguientes:** se reutiliza el archivo existente, conservando resultados, estadísticas e historial del torneo entre sesiones.
+- **Ejecuciones siguientes:** se reutiliza el archivo existente, conservando resultados e historial. Las estadísticas temporales de jugadores se muestran al finalizar cada torneo y luego se limpian para no mezclarlas con el torneo siguiente.
 
 > Si querés **resetear el torneo desde cero**, eliminá el archivo `Skyfut/db/torneo.db` y volvé a ejecutar la aplicación: se regenerará limpio.
 
